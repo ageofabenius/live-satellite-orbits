@@ -1,35 +1,40 @@
 <script lang="ts">
-	import { T } from '@threlte/core';
-
-	const EARTH_RADIUS_KM = 6371;
-	const EARTH_RADIUS_MILES = 3959;
-
-
 	// TO-DO:
 	// Correctly-sized globe
 	// Choose new globe?  New textures?
 	// Correctly tilted-globe
 	// Correctly live-rotated globe
+
+	import { T } from '@threlte/core';
+	import { TextureLoader, Mesh } from 'three';
+
+	import { interactivity } from '@threlte/extras';
+	interactivity();
+
+	const EARTH_RADIUS_KM = 6371;
+
+	let { earth_mesh = $bindable() }: { earth_mesh: Mesh } = $props();
+
+	const loader = new TextureLoader();
+
+	const earth_texture = loader.load(
+		'https://unpkg.com/three-globe@2.45.0/example/img/earth-blue-marble.jpg'
+	);
+	const bump_texture = loader.load(
+		'https://unpkg.com/three-globe@2.45.0/example/img/earth-topology.png'
+	);
 </script>
 
-<T.Group
-	scale={EARTH_RADIUS_KM / 100}
-	oncreate={(group) => {
-		(async () => {
-			// ThreeGlobe tries to access `window` on import, this prevents vite dev // from
-			// building since `window` only exists in the browser.  So we import it //
-			// dynamically when running.
-			const mod = await import('three-globe');
-			const ThreeGlobe: any = mod.default;
+<T.Mesh
+	bind:ref={earth_mesh}
+	scale={EARTH_RADIUS_KM}
+	layers={0}
+	onpointerenter={() => console.log('Earth hit')}
+	onpointerleave={() => console.log('Earth leave')}
+>
+	<T.SphereGeometry args={[1, 64, 64]} />
+	<T.MeshStandardMaterial map={earth_texture} bumpMap={bump_texture} bumpScale={0.05} />
+</T.Mesh>
 
-			const globe = new ThreeGlobe()
-				.globeImageUrl('https://unpkg.com/three-globe@2.45.0/example/img/earth-blue-marble.jpg')
-			    .bumpImageUrl('https://unpkg.com/three-globe@2.45.0/example/img/earth-topology.png');
-
-
-			group.add(globe);
-		})();
-	}}
-/>
-
-<!-- <T.DirectionalLight position={[1, 0, 0]} /> -->
+<T.DirectionalLight position={[1, 0, 0]} />
+<T.AmbientLight intensity={0.2} />

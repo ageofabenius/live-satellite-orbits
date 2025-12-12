@@ -72,7 +72,5 @@ export function propagate_tles_to_now(tles: Map<string, SatRec>): Map<string, Po
 
     console.timeEnd("Propagated TLEs")
 
-    console.log(positions_and_velocities)
-
     return positions_and_velocities
 }

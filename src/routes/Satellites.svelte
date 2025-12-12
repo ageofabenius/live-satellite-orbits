@@ -12,10 +12,10 @@
 		Vector3,
 		ShaderMaterial,
 		AdditiveBlending,
-		InstancedBufferAttribute,
 		BufferAttribute,
 		WebGLRenderer,
-		Camera
+		Camera,
+		Mesh
 	} from 'three';
 	import vertex_shader from './satellite.vert?raw';
 	import fragment_shader from './satellite.frag?raw';
@@ -25,7 +25,11 @@
 
 	const SATELLITE_BASE_SIZE = 5;
 	const SATELLITE_HIGHLIGHTED_SIZE = 20;
-	const RAYCASTER_PADDING = 400;
+	const RAYCASTER_PADDING = 200;
+
+	let { earth_mesh } = $props();
+
+	let points_mesh: Mesh | null = $state(null);
 
 	const { raycaster } = interactivity();
 	raycaster.params.Points.threshold = RAYCASTER_PADDING;
@@ -96,7 +100,7 @@
 	// Get the renderer and camera from Threlte
 	const { renderer, camera } = useThrelte();
 	function handle_pointer_enter_satellite(e: any) {
-		const intersections = e.intersections;
+		const intersections = raycaster.intersectObjects([earth_mesh, points_mesh], true);
 
 		if (!intersections.length) return;
 
@@ -112,7 +116,12 @@
 		let minDist = Infinity;
 
 		for (const inter of intersections) {
-			const pointIndex = inter.index;
+			if (inter.object === earth_mesh) {
+				// Ignore any intersections behind the Earth mesh
+				break;
+			}
+
+			const pointIndex = inter.index!;
 
 			// Get world position of this point
 			const pos = satellite_positions![pointIndex];
@@ -126,7 +135,7 @@
 		}
 
 		if (closest) {
-			highlight_point(closest.index);
+			highlight_point(closest.index!);
 		}
 	}
 
@@ -160,6 +169,7 @@
 
 {#if satellites_geometry}
 	<T.Points
+		bind:ref={points_mesh}
 		geometry={satellites_geometry}
 		material={shader_material}
 		onpointerenter={handle_pointer_enter_satellite}
