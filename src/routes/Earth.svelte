@@ -1,8 +1,4 @@
 <script lang="ts">
-	// TO-DO:
-	// Correctly tilted-globe
-	// Correctly live-rotated globe
-
 	import { T, useTask, useThrelte } from '@threlte/core';
 	import {
 		TextureLoader,
@@ -12,18 +8,18 @@
 		LinearSRGBColorSpace,
 		Vector3,
 		MeshPhysicalMaterial,
-		DirectionalLight
+		DirectionalLight,
+		MathUtils
 	} from 'three';
 
 	import { interactivity } from '@threlte/extras';
 	import { onMount } from 'svelte';
 	interactivity();
 
-	const SUN_DIRECTION = [1, 0, 0];
-
-	const EARTH_RADIUS_KM = 6371;
-
 	let { earth_mesh = $bindable() }: { earth_mesh: Mesh } = $props();
+
+	//// Earth mesh and textures ////
+	const EARTH_RADIUS_KM = 6371;
 
 	let day_texture: Texture | undefined = $state();
 	let night_texture: Texture | undefined = $state();
@@ -33,7 +29,6 @@
 
 	let earth_material: MeshPhysicalMaterial | undefined = $state();
 	let earth_material_shader: any = $state();
-	const sunDirectionView = new Vector3(1, 0, 0);
 
 	onMount(async () => {
 		const loader = new TextureLoader();
@@ -84,16 +79,62 @@
 		};
 	});
 
-	let directional_light: DirectionalLight | undefined = $state();
-	const { camera } = useThrelte();
-	useTask(() => {
-		sunDirectionView
-			.copy(directional_light!.position)
-			.normalize()
-			.transformDirection(camera.current.matrixWorldInverse); // WORLD → VIEW
+	const EARTH_AXIAL_TILT = (23.44 * Math.PI) / 180;
 
-		earth_material_shader?.uniforms.sunDirection.value.copy(sunDirectionView);
-	});
+	// //// Sun directional light ////
+	// let sun_direction = $state(new Vector3(-1, 0, 0));
+
+	// let fast_forward_days = 0;
+	// function compute_sun_direction() {
+	// 	let current_time = new Date(Date.now() + fast_forward_days * 24 * 60 * 60 * 1000);
+	// 	let new_sun_direction = new Vector3(-1, 0, 0);
+
+	// 	// Compute adjustment to sun angle to account for Earth's rotation
+	// 	// throughtout the day
+	// 	let fractional_day = current_time.getUTCHours() / 24 + current_time.getUTCMinutes() / 1440;
+	// 	let fractional_day_angle = fractional_day * Math.PI * 2;
+	// 	// sun direction in world frame
+	// 	// Apply the angle to the -Y axis since we're rotating the sun, not the Earth
+	// 	new_sun_direction.applyAxisAngle(new Vector3(0, -1, 0), fractional_day_angle);
+
+	// 	// Compute adjustment to sun angle to account for Earth's axial tilt
+	// 	// throughtout the year
+	// 	// @ts-ignore
+	// 	let day_of_year = (current_time - Date.UTC(current_time.getUTCFullYear(), 0, 0)) / 86_400_000;
+	// 	let fractional_year = day_of_year / 365.2422;
+	// 	let day_of_year_angle = fractional_year * Math.PI * 2 - Math.PI / 2;
+	// 	new_sun_direction.applyAxisAngle(new Vector3(0, 1, 0), day_of_year_angle);
+
+	// 	// Apply the Earth's axial tilt
+	// 	new_sun_direction.applyAxisAngle(new Vector3(0, 0, 1), EARTH_AXIAL_TILT);
+
+	// 	// Apply to the sun_direction state
+	// 	sun_direction = new_sun_direction;
+
+	// 	console.log(`current_time: ${current_time.toISOString()}`);
+
+	// 	fast_forward_days += 1;
+	// }
+
+	// onMount(() => {
+	// 	// Update once every minute
+	// 	const sun_update_interval = setInterval(compute_sun_direction, 50);
+
+	// 	return () => {
+	// 		clearInterval(sun_update_interval);
+	// 	};
+	// });
+
+	// sun direction in camera frame
+	const sunDirectionView = new Vector3();
+	let directional_light: DirectionalLight | undefined = $state();
+	// const { camera } = useThrelte();
+	// useTask(() => {
+	// 	// Transform the sun direction from world frame to camera view frame
+	// 	sunDirectionView.copy(sun_direction).transformDirection(camera.current.matrixWorldInverse);
+
+	// 	earth_material_shader?.uniforms.sunDirection.value.copy(sunDirectionView);
+	// });
 </script>
 
 {#if day_texture && night_texture && cloud_texture && normal_map && specular_map}
@@ -128,8 +169,8 @@
 	</T.Group>
 {/if}
 
-<T.DirectionalLight
+<!-- <T.DirectionalLight
 	bind:ref={directional_light}
-	position={[SUN_DIRECTION[0], SUN_DIRECTION[1], SUN_DIRECTION[2]]}
+	position={[sun_direction.x, sun_direction.y, sun_direction.z]}
 />
-<T.AmbientLight intensity={0.02} />
+<T.AmbientLight intensity={0.02} /> -->
