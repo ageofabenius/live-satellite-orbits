@@ -4,7 +4,7 @@
 	// points to highlight
 
 	import { onMount } from 'svelte';
-	import { load_tles, propagate_tles_to_now } from './load_tles';
+	import { eci_to_three, load_tles, propagate_tles_to_now } from './load_tles';
 	import type { PositionAndVelocity, SatRec } from 'satellite.js';
 	import { T, useThrelte, type CurrentWritable } from '@threlte/core';
 	import {
@@ -64,7 +64,9 @@
 
 		satellite_positions = [
 			...positions_and_velocities.values().map((value) => {
-				return new Vector3(value.position.x, value.position.y, value.position.z);
+				// return new Vector3(value.position.x, value.position.y,
+				// value.position.z);
+				return eci_to_three(value.position)
 			})
 		];
 

@@ -1,4 +1,5 @@
-import { propagate, twoline2satrec, type PositionAndVelocity, type SatRec } from 'satellite.js';
+import { propagate, twoline2satrec, type EciVec3, type Kilometer, type KilometerPerSecond, type PositionAndVelocity, type SatRec } from 'satellite.js';
+import { Vector3 } from 'three';
 
 const CELESTRAK_ACTIVE_TLES_URL = "https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle"
 
@@ -73,4 +74,8 @@ export function propagate_tles_to_now(tles: Map<string, SatRec>): Map<string, Po
     console.timeEnd("Propagated TLEs")
 
     return positions_and_velocities
+}
+
+export function eci_to_three(eci: EciVec3<Kilometer> | EciVec3<KilometerPerSecond>): Vector3 {
+    return new Vector3(eci.x, eci.z, -eci.y)
 }

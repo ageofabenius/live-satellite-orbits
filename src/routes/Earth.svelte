@@ -19,8 +19,9 @@
 	import { onMount } from 'svelte';
 	interactivity();
 
-	const EARTH_RADIUS_KM = 6371;
 	const SUN_DIRECTION = [1, 0, 0];
+
+	const EARTH_RADIUS_KM = 6371;
 
 	let { earth_mesh = $bindable() }: { earth_mesh: Mesh } = $props();
 
@@ -127,5 +128,8 @@
 	</T.Group>
 {/if}
 
-<T.DirectionalLight bind:ref={directional_light} position={[...SUN_DIRECTION]} />
+<T.DirectionalLight
+	bind:ref={directional_light}
+	position={[SUN_DIRECTION[0], SUN_DIRECTION[1], SUN_DIRECTION[2]]}
+/>
 <T.AmbientLight intensity={0.02} />

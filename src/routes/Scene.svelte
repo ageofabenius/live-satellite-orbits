@@ -22,4 +22,4 @@
 
 <Earth bind:earth_mesh />
 
-<!-- <Satellites {earth_mesh} /> -->
+<Satellites {earth_mesh} />
