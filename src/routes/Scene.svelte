@@ -3,8 +3,9 @@
 	import { OrbitControls } from '@threlte/extras';
 	import Earth from './Earth.svelte';
 	import Satellites from './Satellites.svelte';
+	import type { Mesh } from 'three';
 
-	let earth_mesh = $state(null);
+	let earth_mesh: Mesh | null = $state(null);
 </script>
 
 <T.PerspectiveCamera
@@ -21,4 +22,4 @@
 
 <Earth bind:earth_mesh />
 
-<Satellites {earth_mesh} />
+<!-- <Satellites {earth_mesh} /> -->
