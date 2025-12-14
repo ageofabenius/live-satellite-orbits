@@ -6,7 +6,7 @@
 	import { Mesh, PerspectiveCamera, Vector3, type DirectionalLight, type Group } from 'three';
 	import { onMount } from 'svelte';
 
-	const TICK_RATE_SECONDS = 1;
+	const TICK_RATE_SECONDS = 5;
 
 	const EARTH_ORBIT_KM = 150_000_000;
 	const YEAR_DAYS = 365.2422;
@@ -79,6 +79,7 @@
 	}
 
 	onMount(() => {
+		update_simulated_time();
 		const orbit_update_interval = setInterval(update_simulated_time, TICK_RATE_SECONDS * 1000);
 
 		return () => {
@@ -117,7 +118,7 @@
 			<Earth bind:earth_mesh />
 		</T.Group>
 
-		<Satellites {earth_mesh} {simulated_time} />
+		<Satellites {earth_mesh} {simulated_time} tick_rate_seconds={TICK_RATE_SECONDS} />
 	</T.Group>
 </T.Group>
 

@@ -12,24 +12,6 @@ async function load_test_tles(): Promise<String> {
     return text;
 }
 
-// export async function load_test_tles() {
-//     if (typeof window !== 'undefined') {
-//         return (await import('../../test/test_data/active.txt?raw')).default;
-//     } else {
-//         const { readFile } = await import('node:fs/promises');
-//         const { fileURLToPath } = await import('node:url');
-//         const path = await import('node:path');
-
-//         const __filename = fileURLToPath(import.meta.url);
-//         const __dirname = path.dirname(__filename);
-
-//         return readFile(
-//             path.join(__dirname, '../../test/test_data/active.txt'),
-//             'utf8'
-//         );
-//     }
-// }
-
 async function fetch_tles(): Promise<string> {
     console.log("Fetching TLEs from Celestrak...")
     console.time("Fetched TLEs")
@@ -40,56 +22,6 @@ async function fetch_tles(): Promise<string> {
 
     return str
 }
-
-export type TLE = {
-    name: string,
-    line_1: string,
-    line_2: string,
-}
-
-
-// export async function load_tles(): Promise<TLE[]> {
-//     console.time("Loaded TLEs")
-//     console.time("Fetched TLEs")
-
-//     let tles_str;
-//     if (DEV) {
-//         tles_str = (await load_test_tles())
-//     } else {
-//         tles_str = (await fetch_tles())
-//     }
-//     console.timeEnd("Fetched TLEs")
-
-//     console.time("Parsed TLEs")
-//     const lines = tles_str
-//         // Trim any trailing newlines
-//         .trim()
-//         // Split on newlines
-//         .split("\n");
-//     console.timeEnd("Parsed TLEs")
-
-//     console.time("Initialized TLEs")
-//     let tles: TLE[] = []
-//     for (let i = 0; i < Math.min(lines!.length, DEV_LIMIT); i += 3) {
-//         const name = lines![i]
-//         const line_1 = lines![i + 1]
-//         const line_2 = lines![i + 2]
-
-
-
-//         tles.push({
-//             name: name,
-//             line_1: line_1,
-//             line_2: line_2,
-//         })
-//     }
-//     console.timeEnd("Initialized TLEs")
-//     console.timeEnd("Loaded TLEs")
-//     console.log(`Ingested ${tles.length} satellite TLEs`)
-
-//     return tles
-// }
-
 
 export async function load_tles(): Promise<[string, SatRec][]> {
     console.time("Loaded TLEs")
@@ -127,34 +59,6 @@ export async function load_tles(): Promise<[string, SatRec][]> {
 
     return tles
 }
-
-// export function propagate_tles_to_target_time(tles: TLE[], target_time: Date): [string, PositionAndVelocity][] {
-//     console.log('Propagating TLEs...')
-//     console.time("Propagated TLEs")
-
-//     let target_time_cloned = new Date(target_time.getTime())
-
-//     let positions_and_velocities: [string, PositionAndVelocity][] = []
-//     let n = 0
-//     for (const tle of tles) {
-//         if (n % 100 == 0) {
-//             console.log(`Propagating ${n}th TLE`)
-//         }
-//         const satrec = twoline2satrec(tle.line_1, tle.line_2);
-//         const position_and_velocity: PositionAndVelocity = propagate(satrec, target_time_cloned)!
-//         if (!position_and_velocity) {
-//             console.warn("Unable to propagate satellite", tle.name, position_and_velocity)
-//         } else {
-//             positions_and_velocities.push([tle.name, position_and_velocity])
-//         }
-
-//         n += 1
-//     }
-
-//     console.timeEnd("Propagated TLEs")
-
-//     return positions_and_velocities
-// }
 
 export function propagate_tles_to_target_time(tles: [string, SatRec][], target_time: Date): [string, PositionAndVelocity | null][] {
     console.log('Propagating TLEs...')

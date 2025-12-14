@@ -139,7 +139,9 @@
 
 {#if day_texture && night_texture && cloud_texture && normal_map && specular_map}
 	<T.Group scale={EARTH_RADIUS_KM}>
-		<T.Mesh bind:ref={earth_mesh}>
+		<T.Mesh
+			bind:ref={earth_mesh}
+		>
 			<T.SphereGeometry args={[1, 128, 128]} />
 			<T.MeshPhysicalMaterial
 				bind:ref={earth_material}
@@ -168,9 +170,3 @@
 		</T.Mesh>
 	</T.Group>
 {/if}
-
-<!-- <T.DirectionalLight
-	bind:ref={directional_light}
-	position={[sun_direction.x, sun_direction.y, sun_direction.z]}
-/>
-<T.AmbientLight intensity={0.02} /> -->
