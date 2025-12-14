@@ -1,10 +1,6 @@
 <script lang="ts">
-	// TO-DO: Fix axes so z is north pole Once mesh Earth is added, don't
-	// include points behind Earth when choosing raycasted intersectioning
-	// points to highlight
-
 	import { onMount } from 'svelte';
-	import { eci_to_three, load_tles, propagate_tles_to_now } from './load_tles';
+	import { eci_to_three, load_tles, propagate_tles_to_target_time, type TLE } from './load_tles';
 	import type { PositionAndVelocity, SatRec } from 'satellite.js';
 	import { T, useThrelte, type CurrentWritable } from '@threlte/core';
 	import {
@@ -21,13 +17,18 @@
 	import fragment_shader from './satellite.frag?raw';
 
 	import { interactivity } from '@threlte/extras';
-	import type { _ } from '$env/static/private';
 
 	const SATELLITE_BASE_SIZE = 5;
 	const SATELLITE_HIGHLIGHTED_SIZE = 20;
 	const RAYCASTER_PADDING = 200;
 
-	let { earth_mesh } = $props();
+	let {
+		earth_mesh,
+		simulated_time
+	}: {
+		earth_mesh: Mesh;
+		simulated_time: Date;
+	} = $props();
 
 	let points_mesh: Mesh | null = $state(null);
 
@@ -36,7 +37,7 @@
 
 	const { invalidate } = useThrelte();
 
-	let tles: Map<string, SatRec> | null = $state(null);
+	let tles: [string, SatRec][] = [];
 
 	const shader_material = new ShaderMaterial({
 		vertexShader: vertex_shader,
@@ -46,32 +47,69 @@
 		blending: AdditiveBlending
 	});
 
-	let satellite_positions: Vector3[] | null = null;
-	let satellites_geometry: BufferGeometry | null = $state(null);
+	$effect(() => {
+		console.log('simulated_time in Satellites.svelte', simulated_time);
+
+		propagate_to_time(tles, simulated_time);
+	});
+
+	// let positions_and_velocities: [string, PositionAndVelocity][] = $derived.by(() => {
+	// 	console.log('positions_and_velocities deriving...', 'simulated_time', simulated_time);
+	// 	if (!tles) {
+	// 		return [];
+	// 	}
+	// 	return propagate_tles_to_target_time(tles, simulated_time);
+	// });
+
+	// let satellite_positions: [TLE, Vector3][] = $derived.by(() => {
+	// 	return positions_and_velocities.map(([tle, position_and_velocity]) => {
+	// 		return [{ ...tle }, eci_to_three(position_and_velocity.position)];
+	// 	});
+	// });
+
+	let satellite_positions: [string, Vector3][] = [];
+
+	let satellites_geometry: BufferGeometry = $state(new BufferGeometry());
 
 	let point_sizes: Float32Array | null = null;
 
 	onMount(async () => {
 		tles = await load_tles();
 
-		point_sizes = new Float32Array(tles.size).fill(SATELLITE_BASE_SIZE);
+		satellites_geometry.setAttribute(
+			'position',
+			new BufferAttribute(new Float32Array(tles.length * 3), 3)
+		);
 
-		propagate_to_now(tles);
+		point_sizes = new Float32Array(tles.length).fill(SATELLITE_BASE_SIZE);
+		satellites_geometry.setAttribute('size', new BufferAttribute(point_sizes, 1));
+
+		propagate_to_time(tles, simulated_time);
 	});
 
-	function propagate_to_now(tles: Map<string, SatRec>) {
-		let positions_and_velocities: Map<string, PositionAndVelocity> = propagate_tles_to_now(tles);
+	function propagate_to_time(tles: [string, SatRec][], target_time: Date) {
+		let positions_and_velocities: [string, PositionAndVelocity | null][] =
+			propagate_tles_to_target_time(tles, target_time);
 
-		satellite_positions = [
-			...positions_and_velocities.values().map((value) => {
-				// return new Vector3(value.position.x, value.position.y,
-				// value.position.z);
-				return eci_to_three(value.position)
-			})
-		];
+		satellite_positions = positions_and_velocities.map(([name, pos_and_vel]) => {
+			const position = pos_and_vel ? eci_to_three(pos_and_vel.position) : new Vector3(0, 0, 0);
+			return [name, position];
+		});
 
-		satellites_geometry = new BufferGeometry().setFromPoints(satellite_positions);
-		satellites_geometry.setAttribute('size', new BufferAttribute(point_sizes!, 1));
+		const position_attribute: BufferAttribute = satellites_geometry.getAttribute(
+			'position'
+		) as BufferAttribute;
+
+		if (!position_attribute) {
+			return;
+		}
+
+		for (let i = 0; i < satellite_positions.length; i++) {
+			const [name, position] = satellite_positions[i];
+			position_attribute.setXYZ(i, position.x, position.y, position.z);
+		}
+
+		position_attribute.needsUpdate = true;
 	}
 
 	let highlighted_index: number | null = null;
@@ -126,7 +164,7 @@
 			const pointIndex = inter.index!;
 
 			// Get world position of this point
-			const pos = satellite_positions![pointIndex];
+			const [tle, pos] = satellite_positions![pointIndex];
 
 			const dist = screenSpaceDistance(renderer, camera, pos, mouse);
 

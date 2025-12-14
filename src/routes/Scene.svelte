@@ -3,8 +3,15 @@
 	import { OrbitControls } from '@threlte/extras';
 	import Earth from './Earth.svelte';
 	import Satellites from './Satellites.svelte';
-	import { PerspectiveCamera, Vector3, type DirectionalLight, type Group } from 'three';
+	import { Mesh, PerspectiveCamera, Vector3, type DirectionalLight, type Group } from 'three';
 	import { onMount } from 'svelte';
+
+	const TICK_RATE_SECONDS = 1;
+
+	const EARTH_ORBIT_KM = 150_000_000;
+	const YEAR_DAYS = 365.2422;
+
+	const EARTH_AXIAL_TILT_RAD = (23.44 * Math.PI) / 180;
 
 	let earth_orbit_group: Group | undefined = $state();
 	let earth_rotate_group: Group | undefined = $state();
@@ -15,11 +22,6 @@
 
 	let camera: PerspectiveCamera | undefined = $state();
 	let ghost_camera: PerspectiveCamera | undefined = $state();
-
-	const EARTH_ORBIT_KM = 150_000_000;
-	const YEAR_DAYS = 365.2422;
-
-	const EARTH_AXIAL_TILT_RAD = (23.44 * Math.PI) / 180;
 
 	function orbit_earth(target_date: Date) {
 		console.log('orbiting...');
@@ -55,13 +57,14 @@
 		earth_rotate_group!.rotation.y = fractional_day_angle;
 	}
 
+	let simulated_time: Date = $state(new Date());
 	let fast_forward_hours = 0;
 	let fast_forward_days = 0;
-	function update_earth_group_position_and_rotation() {
-		// let current_time = new Date();
-		let current_time = new Date('2025-03-20T15:00:00+00:00');
+	function update_simulated_time() {
+		let current_time = new Date();
+		// let current_time = new Date('2025-03-20T15:00:00+00:00');
 
-		let simulated_time = new Date(
+		simulated_time = new Date(
 			current_time.getTime() + (fast_forward_days * 24 + fast_forward_hours) * 60 * 60 * 1000
 		);
 
@@ -72,11 +75,11 @@
 		console.log('simulated_time', simulated_time.toISOString());
 
 		// fast_forward_days += 10;
-		fast_forward_hours += 0.25;
+		// fast_forward_hours += (10 / 60) / 60;
 	}
 
 	onMount(() => {
-		const orbit_update_interval = setInterval(update_earth_group_position_and_rotation, 1000);
+		const orbit_update_interval = setInterval(update_simulated_time, TICK_RATE_SECONDS * 1000);
 
 		return () => {
 			clearInterval(orbit_update_interval);
@@ -106,7 +109,7 @@
 			position={[10_000, 10_000, 10_000]}
 			lookAt={[0, 0, 0]}
 			near={1}
-			far={500_000}
+			far={1_500_000}
 		/>
 
 		<!-- Earth day-rotation group -->
@@ -114,7 +117,7 @@
 			<Earth bind:earth_mesh />
 		</T.Group>
 
-		<Satellites {earth_mesh} />
+		<Satellites {earth_mesh} {simulated_time} />
 	</T.Group>
 </T.Group>
 
@@ -124,5 +127,5 @@
 	near={1}
 	far={500_000}
 >
-	<OrbitControls enableDamping enablePan={false} minDistance={10_000} maxDistance={100_000} />
+	<OrbitControls enableDamping enablePan={false} minDistance={10_000} maxDistance={1_000_000} />
 </T.PerspectiveCamera>
