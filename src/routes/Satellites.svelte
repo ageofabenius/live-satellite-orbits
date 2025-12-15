@@ -11,7 +11,8 @@
 		BufferAttribute,
 		WebGLRenderer,
 		Camera,
-		Mesh
+		Mesh,
+		type Intersection
 	} from 'three';
 	import vertex_shader from './satellite.vert?raw';
 	import fragment_shader from './satellite.frag?raw';
@@ -63,7 +64,7 @@
 
 	let point_sizes: Float32Array | null = null;
 
-	let position_attribute: BufferAttribute | null = null;
+	let satellites_position_attribute: BufferAttribute | null = null;
 
 	onMount(async () => {
 		tles = await load_tles();
@@ -73,7 +74,7 @@
 			new BufferAttribute(new Float32Array(tles.length * 3), 3)
 		);
 
-		position_attribute = satellites_geometry.getAttribute('position') as BufferAttribute;
+		satellites_position_attribute = satellites_geometry.getAttribute('position') as BufferAttribute;
 
 		point_sizes = new Float32Array(tles.length).fill(SATELLITE_BASE_SIZE);
 		satellites_geometry.setAttribute('size', new BufferAttribute(point_sizes, 1));
@@ -83,7 +84,7 @@
 
 		for (let i = 0; i < start_satellite_positions.length; i++) {
 			const [name, position] = start_satellite_positions[i];
-			position_attribute.setXYZ(i, position.x, position.y, position.z);
+			satellites_position_attribute.setXYZ(i, position.x, position.y, position.z);
 		}
 	});
 
@@ -104,7 +105,7 @@
 	}
 
 	useTask((delta) => {
-		if (!position_attribute) {
+		if (!satellites_position_attribute) {
 			return;
 		}
 		if (interpolated_elapsed_seconds >= tick_rate_seconds) {
@@ -122,9 +123,11 @@
 			const y = start.y + (target.y - start.y) * t;
 			const z = start.z + (target.z - start.z) * t;
 
-			position_attribute.setXYZ(i, x, y, z);
+			satellites_position_attribute.setXYZ(i, x, y, z);
 		}
-		position_attribute.needsUpdate = true;
+		satellites_position_attribute.needsUpdate = true;
+		satellites_geometry.computeBoundingSphere();
+		satellites_geometry.computeBoundingBox();
 	});
 
 	let highlighted_index: number | null = null;
@@ -152,9 +155,18 @@
 		highlighted_index = null;
 	}
 
+	// Raycasting to highlight satellites on mouseover
 	// Get the renderer and camera from Threlte
 	const { renderer, camera } = useThrelte();
-	function handle_pointer_enter_satellite(e: any) {
+
+	// Register to canvas pointermove event
+	onMount(() => {
+		const canvas = renderer.domElement;
+		canvas.addEventListener('pointermove', on_canvas_pointer_move);
+		return () => canvas.removeEventListener('pointermove', on_canvas_pointer_move);
+	});
+
+	function on_canvas_pointer_move(e: any) {
 		const intersections = raycaster.intersectObjects(
 			[
 				earth_mesh,
@@ -164,16 +176,34 @@
 			true
 		);
 
-		if (!intersections.length) return;
+		// console.log(`on_canvas_pointer_move intersecting with ${intersections.length} objects`);
 
-		const canvas = renderer.domElement;
-		const rect = canvas.getBoundingClientRect();
+		if (!intersections.length) {
+			unhighlight_point();
+		} else if (intersections.length > 0) {
+			const canvas = renderer.domElement;
+			const rect = canvas.getBoundingClientRect();
 
-		const mouse = {
-			x: (e.pointer.x * 0.5 + 0.5) * rect.width,
-			y: (1 - (e.pointer.y * 0.5 + 0.5)) * rect.height
-		};
+			const mouse = {
+				x: (e.clientX * 0.5 + 0.5) * rect.width,
+				y: (1 - (e.clientY * 0.5 + 0.5)) * rect.height
+			};
 
+			const closest = closest_intersected_satellite(intersections, mouse);
+
+			if (closest) {
+				highlight_point(closest.index!);
+			}
+		}
+	}
+
+	function closest_intersected_satellite(
+		intersections: Intersection[],
+		mouse: {
+			x: number;
+			y: number;
+		}
+	): Intersection | null {
 		let closest = null;
 		let minDist = Infinity;
 
@@ -188,7 +218,7 @@
 			// Get world position of this point
 			const [tle, pos] = target_satellite_positions![pointIndex];
 
-			const dist = screenSpaceDistance(renderer, camera, pos, mouse);
+			const dist = screen_space_distance(renderer, camera, pos, mouse);
 
 			if (dist < minDist) {
 				minDist = dist;
@@ -196,12 +226,10 @@
 			}
 		}
 
-		if (closest) {
-			highlight_point(closest.index!);
-		}
+		return closest;
 	}
 
-	function screenSpaceDistance(
+	function screen_space_distance(
 		renderer: WebGLRenderer,
 		camera: CurrentWritable<Camera>,
 		point: Vector3,
@@ -223,18 +251,8 @@
 
 		return Math.sqrt(dx * dx + dy * dy);
 	}
-
-	function handle_pointer_leave_satellite(e: any) {
-		unhighlight_point();
-	}
 </script>
 
 {#if satellites_geometry}
-	<T.Points
-		bind:ref={points_mesh}
-		geometry={satellites_geometry}
-		material={shader_material}
-		onpointerenter={handle_pointer_enter_satellite}
-		onpointerleave={handle_pointer_leave_satellite}
-	/>
+	<T.Points bind:ref={points_mesh} geometry={satellites_geometry} material={shader_material} />
 {/if}
