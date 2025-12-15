@@ -181,15 +181,7 @@
 		if (!intersections.length) {
 			unhighlight_point();
 		} else if (intersections.length > 0) {
-			const canvas = renderer.domElement;
-			const rect = canvas.getBoundingClientRect();
-
-			const mouse = {
-				x: (e.clientX * 0.5 + 0.5) * rect.width,
-				y: (1 - (e.clientY * 0.5 + 0.5)) * rect.height
-			};
-
-			const closest = closest_intersected_satellite(intersections, mouse);
+			const closest = closest_intersected_satellite(intersections);
 
 			if (closest) {
 				highlight_point(closest.index!);
@@ -197,59 +189,26 @@
 		}
 	}
 
-	function closest_intersected_satellite(
-		intersections: Intersection[],
-		mouse: {
-			x: number;
-			y: number;
-		}
-	): Intersection | null {
+	function closest_intersected_satellite(intersections: Intersection[]): Intersection | null {
 		let closest = null;
 		let minDist = Infinity;
 
 		for (const inter of intersections) {
 			if (inter.object === earth_mesh) {
-				// Ignore any intersections behind the Earth mesh
+				// Ignore any intersections **behind** the Earth mesh, or with
+				// the Earth mesh
 				break;
 			}
 
-			const pointIndex = inter.index!;
+			const dist: number | undefined = inter.distanceToRay;
 
-			// Get world position of this point
-			const [tle, pos] = target_satellite_positions![pointIndex];
-
-			const dist = screen_space_distance(renderer, camera, pos, mouse);
-
-			if (dist < minDist) {
+			if (dist && dist < minDist) {
 				minDist = dist;
 				closest = inter;
 			}
 		}
 
 		return closest;
-	}
-
-	function screen_space_distance(
-		renderer: WebGLRenderer,
-		camera: CurrentWritable<Camera>,
-		point: Vector3,
-		mouse: {
-			x: number;
-			y: number;
-		}
-	) {
-		const vector = point.clone().project(camera.current);
-
-		const width = renderer.domElement.clientWidth;
-		const height = renderer.domElement.clientHeight;
-
-		const px = (vector.x * 0.5 + 0.5) * width;
-		const py = (vector.y * -0.5 + 0.5) * height;
-
-		const dx = px - mouse.x;
-		const dy = py - mouse.y;
-
-		return Math.sqrt(dx * dx + dy * dy);
 	}
 </script>
 
