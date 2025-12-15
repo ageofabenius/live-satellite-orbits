@@ -3,7 +3,9 @@
 	import { OrbitControls } from '@threlte/extras';
 	import Earth from './Earth.svelte';
 	import Satellites from './Satellites.svelte';
-	import { Mesh, PerspectiveCamera, Vector3, type DirectionalLight, type Group } from 'three';
+	import { Mesh, PerspectiveCamera, type DirectionalLight, type Group } from 'three';
+	import { OrbitControls as ThreeOrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+
 	import { onMount } from 'svelte';
 
 	const TICK_RATE_SECONDS = 5;
@@ -22,6 +24,7 @@
 
 	let camera: PerspectiveCamera | undefined = $state();
 	let ghost_camera: PerspectiveCamera | undefined = $state();
+	let orbit_controls: ThreeOrbitControls | undefined = $state();
 
 	function orbit_earth(target_date: Date) {
 		console.log('orbiting...');
@@ -107,7 +110,6 @@
 		<T.PerspectiveCamera
 			bind:ref={camera}
 			makeDefault
-			position={[10_000, 10_000, 10_000]}
 			lookAt={[0, 0, 0]}
 			near={1}
 			far={1_500_000}
@@ -118,15 +120,26 @@
 			<Earth bind:earth_mesh />
 		</T.Group>
 
-		<Satellites {earth_mesh} {simulated_time} tick_rate_seconds={TICK_RATE_SECONDS} />
+		<Satellites
+			earth_mesh={earth_mesh!}
+			{simulated_time}
+			tick_rate_seconds={TICK_RATE_SECONDS}
+			orbit_controls={orbit_controls!}
+		/>
 	</T.Group>
 </T.Group>
 
 <T.PerspectiveCamera
 	bind:ref={ghost_camera}
-	position={[30_000, 30_000, 30_000]}
+	position={[20_000, 20_000, 20_000]}
 	near={1}
 	far={500_000}
 >
-	<OrbitControls enableDamping enablePan={false} minDistance={10_000} maxDistance={1_000_000} />
+	<OrbitControls
+		bind:ref={orbit_controls}
+		enableDamping
+		enablePan={false}
+		minDistance={10_000}
+		maxDistance={1_000_000}
+	/>
 </T.PerspectiveCamera>

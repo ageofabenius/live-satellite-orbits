@@ -1,4 +1,5 @@
 varying vec3 vColor;
+varying float vTransparency;
 
 precision mediump float;
 precision mediump int;
@@ -12,7 +13,7 @@ void main(){
     float glow_radius=1.;
     
     if(r<=solid_radius){
-        gl_FragColor=vec4(vColor,1.);
+        gl_FragColor=vec4(vColor,vTransparency);
         return;
     }
     
@@ -20,6 +21,6 @@ void main(){
     
     if(r>1.)discard;
     
-    gl_FragColor=vec4(vColor*glow,glow);
+    gl_FragColor=vec4(vColor*glow,glow*vTransparency);
     
 }

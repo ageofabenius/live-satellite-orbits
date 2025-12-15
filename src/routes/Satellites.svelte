@@ -22,11 +22,14 @@
 	import vertex_shader from './satellite.vert?raw';
 	import fragment_shader from './satellite.frag?raw';
 
+	import { OrbitControls as ThreeOrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+
 	import { interactivity } from '@threlte/extras';
 
 	const SATELLITE_BASE_SIZE = 5;
 	const SATELLITE_HIGHLIGHTED_SIZE = 20;
 	const RAYCASTER_PADDING = 200;
+	const BASE_TRANSPARENCY = 1;
 
 	const OrbitalRegimeColorMap: Record<OrbitalRegime, Vector3> = {
 		[OrbitalRegime.LEO]: new Vector3(0.75, 0.84, 0.92),
@@ -35,21 +38,16 @@
 		[OrbitalRegime.Other]: new Vector3(0.75, 0.84, 0.92)
 	};
 
-	// const OrbitalRegimeColorMap: Record<OrbitalRegime, Vector3> = {
-	// 	[OrbitalRegime.LEO]: new Vector3(0.35, 0.85, 1.0),
-	// 	[OrbitalRegime.MEO]: new Vector3(0.3, 0.85, 0.55),
-	// 	[OrbitalRegime.GEO]: new Vector3(1.0, 0.75, 0.3),
-	// 	[OrbitalRegime.Other]: new Vector3(0.85, 0.4, 1.0)
-	// };
-
 	let {
 		earth_mesh,
 		simulated_time,
-		tick_rate_seconds
+		tick_rate_seconds,
+		orbit_controls
 	}: {
 		earth_mesh: Mesh;
 		simulated_time: Date;
 		tick_rate_seconds: number;
+		orbit_controls: ThreeOrbitControls;
 	} = $props();
 
 	let points_mesh: Mesh | null = $state(null);
@@ -80,12 +78,14 @@
 	let interpolated_elapsed_seconds = 0;
 
 	let satellites_geometry: BufferGeometry = $state(new BufferGeometry());
+	let satellites_position_attribute: BufferAttribute | null = null;
 
 	let point_sizes: Float32Array | null = null;
 
 	let colors: Float32Array | null = null;
 
-	let satellites_position_attribute: BufferAttribute | null = null;
+	let transparencies: Float32Array | null = null;
+	let satellites_transparency_attribute: BufferAttribute | null = null;
 
 	onMount(async () => {
 		// Load TLEs
@@ -104,6 +104,15 @@
 			colors![i * 3 + 2] = color.z;
 		});
 		satellites_geometry.setAttribute('color', new BufferAttribute(colors, 3));
+
+		transparencies = new Float32Array(tles.length).fill(1);
+		satellites_transparency_attribute = satellites_geometry.getAttribute(
+			'transparency'
+		) as BufferAttribute;
+		satellites_geometry.setAttribute(
+			'transparency',
+			new BufferAttribute(transparencies, BASE_TRANSPARENCY)
+		);
 
 		// Initialize position array and set initial point positions
 		satellites_geometry.setAttribute(
@@ -250,6 +259,38 @@
 		}
 
 		return closest;
+	}
+
+	// Register to OrbitControls zoom
+	onMount(() => {
+		orbit_controls.addEventListener('change', on_camera_move);
+		return () => orbit_controls.removeEventListener('change', on_camera_move);
+	});
+
+	let leo_transparency = 1;
+	function on_camera_move(e: any) {
+		let camera_radius = e.target._spherical.radius;
+
+		let new_leo_transparency = 1;
+		if (camera_radius >= 80_000) {
+			console.log(`setting new_leo_transparency = 80_000`);
+			new_leo_transparency = 0.1;
+		} else if (camera_radius >= 60_000) {
+			console.log(`setting new_leo_transparency = 60_000`);
+			new_leo_transparency = 0.25;
+		}
+
+		if (new_leo_transparency != leo_transparency) {
+			console.log('updating transparencies');
+			tles.forEach(([_name, _satrec, orbital_regime], i) => {
+				if (orbital_regime == OrbitalRegime.LEO) {
+					transparencies![i] = new_leo_transparency;
+				}
+			});
+
+			leo_transparency = new_leo_transparency;
+			satellites_geometry!.attributes.transparency.needsUpdate = true;
+		}
 	}
 </script>
 
