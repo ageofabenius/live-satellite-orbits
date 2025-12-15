@@ -9,8 +9,9 @@ void main(){
     float solid_radius=.25;
     float glow_radius=1.;
     
-    vec3 solid_color=vec3(1.,1.,1.);// white
-    vec3 glow_color=vec3(1.,1.,1.);// white glow
+    vec3 solid_color=vec3(0.75, 0.84, 0.92);
+    vec3 glow_color=vec3(0.90, 0.95, 1.00);
+
     
     if(r<=solid_radius){
         gl_FragColor=vec4(solid_color,1.);

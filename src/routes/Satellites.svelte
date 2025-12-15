@@ -9,8 +9,6 @@
 		ShaderMaterial,
 		AdditiveBlending,
 		BufferAttribute,
-		WebGLRenderer,
-		Camera,
 		Mesh,
 		type Intersection
 	} from 'three';
@@ -20,7 +18,7 @@
 	import { interactivity } from '@threlte/extras';
 
 	const SATELLITE_BASE_SIZE = 5;
-	const SATELLITE_HIGHLIGHTED_SIZE = 20;
+	const SATELLITE_HIGHLIGHTED_SIZE = 20
 	const RAYCASTER_PADDING = 200;
 
 	let {
