@@ -273,15 +273,12 @@
 
 		let new_leo_transparency = 1;
 		if (camera_radius >= 80_000) {
-			console.log(`setting new_leo_transparency = 80_000`);
 			new_leo_transparency = 0.1;
 		} else if (camera_radius >= 60_000) {
-			console.log(`setting new_leo_transparency = 60_000`);
 			new_leo_transparency = 0.25;
 		}
 
 		if (new_leo_transparency != leo_transparency) {
-			console.log('updating transparencies');
 			tles.forEach(([_name, _satrec, orbital_regime], i) => {
 				if (orbital_regime == OrbitalRegime.LEO) {
 					transparencies![i] = new_leo_transparency;
