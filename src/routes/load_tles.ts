@@ -147,7 +147,7 @@ export function eci_to_three(eci: EciVec3<Kilometer> | EciVec3<KilometerPerSecon
 
 const STEPS_PER_ORBIT = 512
 export function propagate_one_orbit(satrec: SatRec, current_simulated_time: Date): Vector3[] | null {
-    console.time("Propagated one orbital period")
+    // console.time("Propagated one orbital period")
     // console.log("propagate_one_orbit", satrec.satnum)
 
     const mean_motion_rev_per_day = (satrec.no * 1440) / (2 * Math.PI)
@@ -175,7 +175,7 @@ export function propagate_one_orbit(satrec: SatRec, current_simulated_time: Date
         positions.push(position)
     }
 
-    console.timeEnd("Propagated one orbital period")
+    // console.timeEnd("Propagated one orbital period")
 
     return positions
 }

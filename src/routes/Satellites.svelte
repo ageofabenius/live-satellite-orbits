@@ -19,7 +19,8 @@
 		BufferAttribute,
 		Mesh,
 		type Intersection,
-		Points
+		Points,
+		Vector2
 	} from 'three';
 	import vertex_shader from './satellite.vert?raw';
 	import fragment_shader from './satellite.frag?raw';
@@ -208,66 +209,120 @@
 		satellites_geometry.computeBoundingBox();
 	});
 
-	let highlighted_index: number | null = null;
-	function highlight_point(index: number) {
-		if (index == highlighted_index) {
-			// This occurs when the mouse moves while still hovering over the
-			// same point
-			return;
-		}
+	let hovered_satellite_index: number | null = null;
+	let selected_satellite_index: number | null = null;
 
-		if (highlighted_index !== null) {
+	let highlighted_satellite_index: number | null = null;
+	let displayed_orbit_index: number | null = null;
+	function highlight_point(index: number) {
+		if (hovered_satellite_index !== null) {
 			unhighlight_point();
 		}
 
-		highlighted_index = index;
+		highlighted_satellite_index = index;
 
-		const orbit_positions = propagate_one_orbit(tles[index][1], simulated_time);
-		if (orbit_positions) {
-			orbit_line!.geometry.setPositions(orbit_positions.flatMap((p) => [p.x, p.y, p.z]));
-			orbit_line!.computeLineDistances();
-		}
-
-		point_sizes![highlighted_index] = SATELLITE_HIGHLIGHTED_SIZE;
+		point_sizes![highlighted_satellite_index] = SATELLITE_HIGHLIGHTED_SIZE;
 		satellites_geometry!.attributes.size.needsUpdate = true;
 		invalidate();
 	}
 
 	function unhighlight_point() {
-		if (highlighted_index === null) {
+		if (highlighted_satellite_index === null) {
 			return;
 		}
 
-		// geometry needs at least 1 point or it errors
-		orbit_line!.geometry.setPositions([0, 0, 0]);
-		orbit_line!.computeLineDistances();
-
-		point_sizes![highlighted_index] = SATELLITE_BASE_SIZE;
+		point_sizes![highlighted_satellite_index] = SATELLITE_BASE_SIZE;
 		satellites_geometry!.attributes.size.needsUpdate = true;
 		invalidate();
 
-		highlighted_index = null;
+		highlighted_satellite_index = null;
+	}
+
+	function show_orbit(index: number) {
+		const orbit_positions = propagate_one_orbit(tles[index][1], simulated_time);
+		if (orbit_positions) {
+			orbit_line!.geometry.setPositions(orbit_positions.flatMap((p) => [p.x, p.y, p.z]));
+			orbit_line!.computeLineDistances();
+
+			displayed_orbit_index = index;
+		}
+	}
+
+	function hide_orbit() {
+		if (displayed_orbit_index === null) {
+			return;
+		}
+		// geometry needs at least 1 point or it errors
+		orbit_line!.geometry.setPositions([0, 0, 0]);
+		orbit_line!.computeLineDistances();
+		invalidate();
+
+		displayed_orbit_index = null;
 	}
 
 	// Raycasting to highlight satellites on mouseover
 	// Get the renderer and camera from Threlte
 	const { renderer } = useThrelte();
 
-	// Register to canvas pointermove event
 	onMount(() => {
 		const canvas = renderer.domElement;
+
+		// Register to canvas pointermove event
 		canvas.addEventListener('pointermove', on_canvas_pointer_move);
-		return () => canvas.removeEventListener('pointermove', on_canvas_pointer_move);
+
+		// Register to canvas click event
+		canvas.addEventListener('pointerdown', on_canvas_pointerdown);
+		canvas.parentElement!.addEventListener('click', on_canvas_click);
+
+		return () => {
+			canvas.removeEventListener('pointermove', on_canvas_pointer_move);
+			canvas.removeEventListener('pointerdown', on_canvas_pointerdown);
+			canvas.parentElement!.removeEventListener('click', on_canvas_click);
+		};
 	});
 
-	// Register to canvas click event
-	onMount(() => {
-		const canvas = renderer.domElement;
-		canvas.addEventListener('pointerdown', on_canvas_click);
-		return () => canvas.removeEventListener('pointerdown', on_canvas_click);
-	});
+	function handle_highlight_and_orbit_display() {
+		// console.log(
+		// 	`handle_highlight_and_orbit_display with hovered, selected: ${hovered_satellite_index}, ${selected_satellite_index}`
+		// );
+		if (selected_satellite_index) {
+			highlight_point(selected_satellite_index);
+			show_orbit(selected_satellite_index);
+		} else if (hovered_satellite_index) {
+			highlight_point(hovered_satellite_index);
+			show_orbit(hovered_satellite_index);
+		} else {
+			unhighlight_point();
+			hide_orbit();
+		}
+	}
 
-	function on_canvas_pointer_move(e: any) {
+	function on_canvas_pointer_move() {
+		const hovered_satellite = raycast_mouse_to_satellite();
+
+		// console.log(`on_canvas_pointer_move intersecting with ${intersections.length} objects`);
+
+		if (!hovered_satellite) {
+			if (hovered_satellite_index === null) {
+				// This occurs when the mouse moves while still hovering over the
+				// same point
+				return;
+			}
+			hovered_satellite_index = null;
+			handle_highlight_and_orbit_display();
+		} else {
+			if (hovered_satellite_index === hovered_satellite.index) {
+				// This occurs when the mouse moves while still hovering over the
+				// same point
+				return;
+			}
+
+			hovered_satellite_index = hovered_satellite.index!;
+			handle_highlight_and_orbit_display();
+		}
+	}
+
+	function raycast_mouse_to_satellite(): Intersection | null {
 		const intersections = raycaster.intersectObjects(
 			[
 				earth_mesh,
@@ -277,20 +332,6 @@
 			true
 		);
 
-		// console.log(`on_canvas_pointer_move intersecting with ${intersections.length} objects`);
-
-		if (!intersections.length) {
-			unhighlight_point();
-		} else if (intersections.length > 0) {
-			const closest = closest_intersected_satellite(intersections);
-
-			if (closest) {
-				highlight_point(closest.index!);
-			}
-		}
-	}
-
-	function closest_intersected_satellite(intersections: Intersection[]): Intersection | null {
 		let closest = null;
 		let minDist = Infinity;
 
@@ -312,8 +353,50 @@
 		return closest;
 	}
 
+	let drag_start_position = new Vector2(0, 0);
+	const DRAG_THRESHOLD = 10;
+	function on_canvas_pointerdown(e: any) {
+		// Record the start position of a potential drag
+		[drag_start_position.x, drag_start_position.y] = [e.clientX, e.clientY];
+	}
+
 	function on_canvas_click(e: any) {
-		console.log('on_canvas_click');
+		const current_position = new Vector2(e.clientX, e.clientY);
+		const dragged_distance = drag_start_position.distanceTo(current_position);
+		// console.log(
+		// 	'on_canvas_click called',
+		// 	'drag_start_position',
+		// 	drag_start_position,
+		// 	'current_position',
+		// 	current_position,
+		// 	'dragged_distance',
+		// 	dragged_distance
+		// );
+		if (dragged_distance > DRAG_THRESHOLD) {
+			return;
+		}
+
+		const clicked_satellite = raycast_mouse_to_satellite();
+
+		// console.log(`on_canvas_pointer_move intersecting with ${intersections.length} objects`);
+
+		if (!clicked_satellite) {
+			if (selected_satellite_index === null) {
+				// This occurs when the mouse moves while still hovering over the
+				// same point
+				return;
+			}
+			selected_satellite_index = null;
+		} else {
+			if (selected_satellite_index === clicked_satellite.index) {
+				// This occurs when the mouse moves while still hovering over the
+				// same point
+				return;
+			}
+
+			selected_satellite_index = clicked_satellite.index!;
+		}
+		handle_highlight_and_orbit_display();
 	}
 
 	// Register to OrbitControls zoom
