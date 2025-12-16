@@ -6,10 +6,11 @@
 		eci_to_three,
 		load_tles,
 		OrbitalRegime,
+		propagate_one_orbit,
 		propagate_tles_to_target_time
 	} from './load_tles';
 	import type { PositionAndVelocity, SatRec } from 'satellite.js';
-	import { T, useTask, useThrelte, type CurrentWritable } from '@threlte/core';
+	import { T, useTask, useThrelte } from '@threlte/core';
 	import {
 		BufferGeometry,
 		Vector3,
@@ -17,7 +18,8 @@
 		AdditiveBlending,
 		BufferAttribute,
 		Mesh,
-		type Intersection
+		type Intersection,
+		Points
 	} from 'three';
 	import vertex_shader from './satellite.vert?raw';
 	import fragment_shader from './satellite.frag?raw';
@@ -25,6 +27,16 @@
 	import { OrbitControls as ThreeOrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 	import { interactivity } from '@threlte/extras';
+
+	import { Line2 } from 'three/addons/lines/Line2.js';
+	import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
+	import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
+	import { extend } from '@threlte/core';
+	extend({
+		Line2,
+		LineGeometry,
+		LineMaterial
+	});
 
 	const SATELLITE_BASE_SIZE = 5;
 	const SATELLITE_HIGHLIGHTED_SIZE = 20;
@@ -50,7 +62,7 @@
 		orbit_controls: ThreeOrbitControls;
 	} = $props();
 
-	let points_mesh: Mesh | null = $state(null);
+	let points_mesh: Points | null = $state(null);
 
 	const { raycaster } = interactivity();
 	raycaster.params.Points.threshold = RAYCASTER_PADDING;
@@ -68,8 +80,6 @@
 	});
 
 	$effect(() => {
-		console.log('simulated_time in Satellites.svelte', simulated_time);
-
 		propagate_new_target_positions(tles, simulated_time);
 	});
 
@@ -86,6 +96,24 @@
 
 	let transparencies: Float32Array | null = null;
 	let satellites_transparency_attribute: BufferAttribute | null = null;
+
+	let orbit_line: Line2 | null = $state(null);
+	let orbit_line_material: LineMaterial | null = $state(null);
+
+	function update_line_resolution() {
+		if (!orbit_line_material || !renderer) return;
+
+		const canvas = renderer.domElement;
+
+		orbit_line_material.resolution.set(canvas.clientWidth, canvas.clientHeight);
+	}
+
+	onMount(() => {
+		update_line_resolution();
+
+		window.addEventListener('resize', update_line_resolution);
+		return () => window.removeEventListener('resize', update_line_resolution);
+	});
 
 	onMount(async () => {
 		// Load TLEs
@@ -182,11 +210,23 @@
 
 	let highlighted_index: number | null = null;
 	function highlight_point(index: number) {
+		if (index == highlighted_index) {
+			// This occurs when the mouse moves while still hovering over the
+			// same point
+			return;
+		}
+
 		if (highlighted_index !== null) {
 			unhighlight_point();
 		}
 
 		highlighted_index = index;
+
+		const orbit_positions = propagate_one_orbit(tles[index][1], simulated_time);
+		if (orbit_positions) {
+			orbit_line!.geometry.setPositions(orbit_positions.flatMap((p) => [p.x, p.y, p.z]));
+			orbit_line!.computeLineDistances();
+		}
 
 		point_sizes![highlighted_index] = SATELLITE_HIGHLIGHTED_SIZE;
 		satellites_geometry!.attributes.size.needsUpdate = true;
@@ -198,6 +238,10 @@
 			return;
 		}
 
+		// geometry needs at least 1 point or it errors
+		orbit_line!.geometry.setPositions([0, 0, 0]);
+		orbit_line!.computeLineDistances();
+
 		point_sizes![highlighted_index] = SATELLITE_BASE_SIZE;
 		satellites_geometry!.attributes.size.needsUpdate = true;
 		invalidate();
@@ -207,13 +251,20 @@
 
 	// Raycasting to highlight satellites on mouseover
 	// Get the renderer and camera from Threlte
-	const { renderer, camera } = useThrelte();
+	const { renderer } = useThrelte();
 
 	// Register to canvas pointermove event
 	onMount(() => {
 		const canvas = renderer.domElement;
 		canvas.addEventListener('pointermove', on_canvas_pointer_move);
 		return () => canvas.removeEventListener('pointermove', on_canvas_pointer_move);
+	});
+
+	// Register to canvas click event
+	onMount(() => {
+		const canvas = renderer.domElement;
+		canvas.addEventListener('pointerdown', on_canvas_click);
+		return () => canvas.removeEventListener('pointerdown', on_canvas_click);
 	});
 
 	function on_canvas_pointer_move(e: any) {
@@ -261,6 +312,10 @@
 		return closest;
 	}
 
+	function on_canvas_click(e: any) {
+		console.log('on_canvas_click');
+	}
+
 	// Register to OrbitControls zoom
 	onMount(() => {
 		orbit_controls.addEventListener('change', on_camera_move);
@@ -294,3 +349,14 @@
 {#if satellites_geometry}
 	<T.Points bind:ref={points_mesh} geometry={satellites_geometry} material={shader_material} />
 {/if}
+
+<T.Line2 bind:ref={orbit_line}>
+	<T.LineGeometry attach="geometry" />
+	<T.LineMaterial
+		bind:ref={orbit_line_material}
+		attach="material"
+		linewidth={2}
+		transparent
+		opacity={0.7}
+	/>
+</T.Line2>

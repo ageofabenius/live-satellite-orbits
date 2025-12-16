@@ -17,6 +17,8 @@ async function load_test_tles(): Promise<String> {
     return text;
 }
 
+// TO-DO: Add browser local storage caching of active.txt from Celestrak
+
 async function fetch_tles(): Promise<string> {
     console.log("Fetching TLEs from Celestrak...")
     console.time("Fetched TLEs")
@@ -143,3 +145,34 @@ export function eci_to_three(eci: EciVec3<Kilometer> | EciVec3<KilometerPerSecon
     return new Vector3(eci.x, eci.z, -eci.y)
 }
 
+const STEPS_PER_ORBIT = 512
+export function propagate_one_orbit(satrec: SatRec, current_simulated_time: Date): Vector3[] | null {
+    console.time("Propagated one orbital period")
+    // console.log("propagate_one_orbit", satrec.satnum)
+
+    const mean_motion_rev_per_day = (satrec.no * 1440) / (2 * Math.PI)
+    const period_seconds = 86400 / mean_motion_rev_per_day
+
+    const start_time = current_simulated_time;
+    const end_time = new Date(current_simulated_time.getTime() + period_seconds * 1000)
+    const step_size_ms = ((end_time.getTime() - start_time.getTime()) / STEPS_PER_ORBIT)
+
+    // console.log("period_seconds", period_seconds,
+    //     "start_time", start_time.toISOString(),
+    //     "end_time", end_time.toISOString(),
+    //     "step_size_ms", step_size_ms,)
+
+    let positions: Vector3[] = []
+    for (let i = start_time.getTime(); i <= end_time.getTime(); i += step_size_ms) {
+        const t = new Date(i)
+        const position_and_velocity: PositionAndVelocity | null = propagate(satrec, t)
+        if (!position_and_velocity) { return null }
+
+        const position = eci_to_three(position_and_velocity.position)
+        positions.push(position)
+    }
+
+    console.timeEnd("Propagated one orbital period")
+
+    return positions
+}

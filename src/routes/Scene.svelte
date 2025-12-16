@@ -27,7 +27,6 @@
 	let orbit_controls: ThreeOrbitControls | undefined = $state();
 
 	function orbit_earth(target_date: Date) {
-		console.log('orbiting...');
 		// Compute the day of year and position the Earth group accordingly
 		let day_of_year =
 			// @ts-ignore
