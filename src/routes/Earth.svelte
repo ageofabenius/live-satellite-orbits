@@ -33,12 +33,20 @@
 	onMount(async () => {
 		const loader = new TextureLoader();
 
+		// [day_texture, night_texture, cloud_texture, normal_map, specular_map] = await Promise.all([
+		// 	loader.loadAsync('/textures/2k_earth_daymap.jpg'),
+		// 	loader.loadAsync('/textures/2k_earth_nightmap.jpg'),
+		// 	loader.loadAsync('/textures/2k_earth_clouds.jpg'),
+		// 	loader.loadAsync('/textures/2k_earth_normal_map.png'),
+		// 	loader.loadAsync('/textures/2k_earth_specular_map.png')
+		// ]);
+
 		[day_texture, night_texture, cloud_texture, normal_map, specular_map] = await Promise.all([
-			loader.loadAsync('/textures/2k_earth_daymap.jpg'),
-			loader.loadAsync('/textures/2k_earth_nightmap.jpg'),
-			loader.loadAsync('/textures/2k_earth_clouds.jpg'),
-			loader.loadAsync('/textures/2k_earth_normal_map.png'),
-			loader.loadAsync('/textures/2k_earth_specular_map.png')
+			loader.loadAsync('/textures/8k_earth_daymap.jpg'),
+			loader.loadAsync('/textures/8k_earth_nightmap.jpg'),
+			loader.loadAsync('/textures/8k_earth_clouds.jpg'),
+			loader.loadAsync('/textures/8k_earth_normal_map.png'),
+			loader.loadAsync('/textures/8k_earth_specular_map.png')
 		]);
 
 		day_texture.colorSpace = SRGBColorSpace;
@@ -57,7 +65,7 @@
 		// 		`
 		// 		#include <common>
 		// 		uniform vec3 sunDirection;
-    	// 		`
+		// 		`
 		// 	);
 
 		// 	// mask emissive
