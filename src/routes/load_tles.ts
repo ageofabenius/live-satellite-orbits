@@ -151,10 +151,13 @@ export function propagate_one_orbit(satrec: SatRec, current_simulated_time: Date
     // console.log("propagate_one_orbit", satrec.satnum)
 
     const mean_motion_rev_per_day = (satrec.no * 1440) / (2 * Math.PI)
-    const period_seconds = 86400 / mean_motion_rev_per_day
+    const period_ms = (86400 / mean_motion_rev_per_day) * 1000
 
-    const start_time = current_simulated_time;
-    const end_time = new Date(current_simulated_time.getTime() + period_seconds * 1000)
+    // Center propagation on the current time so that the two ends which don't
+    // line up perfectly are on the other side of the globe from the satellite
+    // point itself
+    const start_time = new Date(current_simulated_time.getTime() - period_ms / 2)
+    const end_time = new Date(current_simulated_time.getTime() + period_ms / 2)
     const step_size_ms = ((end_time.getTime() - start_time.getTime()) / STEPS_PER_ORBIT)
 
     // console.log("period_seconds", period_seconds,
