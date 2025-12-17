@@ -346,6 +346,10 @@
 	}
 
 	function raycast_mouse_to_satellite(): Intersection | null {
+		if (!raycaster.camera || !earth_mesh || !points_mesh) {
+			// Scene is not yet fully initialized
+			return null;
+		}
 		const intersections = raycaster.intersectObjects(
 			[
 				earth_mesh,
