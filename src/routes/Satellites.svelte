@@ -296,16 +296,29 @@
 		// Register to canvas pointermove event
 		canvas.addEventListener('pointermove', on_canvas_pointer_move);
 
-		// Register to canvas click event
+		// Register to canvas pointerdown and click events
+		// These are used in conjunction to detect clicks that did not result in
+		// OrbitControls camera moves
 		canvas.addEventListener('pointerdown', on_canvas_pointerdown);
 		canvas.parentElement!.addEventListener('click', on_canvas_click);
+
+		// Register to keyup for Esc presses, these are used to deselect
+		window.addEventListener('keyup', on_canvas_escape_up);
 
 		return () => {
 			canvas.removeEventListener('pointermove', on_canvas_pointer_move);
 			canvas.removeEventListener('pointerdown', on_canvas_pointerdown);
 			canvas.parentElement!.removeEventListener('click', on_canvas_click);
+			window.removeEventListener('keyup', on_canvas_escape_up);
 		};
 	});
+
+	function on_canvas_escape_up(e: any) {
+		if (e.key === 'Escape') {
+			selected_satellite_index = null;
+			handle_highlight_and_orbit_display();
+		}
+	}
 
 	function on_canvas_pointer_move() {
 		const hovered_satellite = raycast_mouse_to_satellite();
