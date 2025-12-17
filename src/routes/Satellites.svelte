@@ -209,33 +209,66 @@
 		satellites_geometry.computeBoundingBox();
 	});
 
+	// Declared desired states
 	let hovered_satellite_index: number | null = null;
 	let selected_satellite_index: number | null = null;
 
-	let highlighted_satellite_index: number | null = null;
-	let displayed_orbit_index: number | null = null;
-	function highlight_point(index: number) {
-		if (hovered_satellite_index !== null) {
-			unhighlight_point();
+	// Tracked states used to unhighlight previously highlighted points
+	let last_hovered_satellite_index: number | null = null;
+	let last_selected_satellite_index: number | null = null;
+
+	function handle_highlight_and_orbit_display() {
+		// Handle highlighting for both hovered and selected points
+		if (!selected_satellite_index && last_selected_satellite_index) {
+			// Handle unhighligting selected point
+			unhighlight_point(last_selected_satellite_index);
+			last_selected_satellite_index = null;
+		} else if (selected_satellite_index) {
+			// First unhighlight previous one if needed
+			if (last_selected_satellite_index) {
+				unhighlight_point(last_selected_satellite_index);
+				last_selected_satellite_index = null;
+			}
+			// Then highlight
+			highlight_point(selected_satellite_index);
+			last_selected_satellite_index = selected_satellite_index;
 		}
 
-		highlighted_satellite_index = index;
+		if (!hovered_satellite_index && last_hovered_satellite_index) {
+			// Handle highlighting hovered point
+			unhighlight_point(last_hovered_satellite_index);
+			last_hovered_satellite_index = null;
+		} else if (hovered_satellite_index) {
+			// First unhighlight previous one if needed
+			if (last_hovered_satellite_index) {
+				unhighlight_point(last_hovered_satellite_index);
+				last_hovered_satellite_index = null;
+			}
+			// Then highlight
+			highlight_point(hovered_satellite_index);
+			last_hovered_satellite_index = hovered_satellite_index;
+		}
 
-		point_sizes![highlighted_satellite_index] = SATELLITE_HIGHLIGHTED_SIZE;
+		// Handle displaying orbit of selected, then hovered if no selected
+		if (selected_satellite_index) {
+			show_orbit(selected_satellite_index);
+		} else if (hovered_satellite_index) {
+			show_orbit(hovered_satellite_index);
+		} else {
+			hide_orbit();
+		}
+	}
+
+	function highlight_point(index: number) {
+		point_sizes![index] = SATELLITE_HIGHLIGHTED_SIZE;
 		satellites_geometry!.attributes.size.needsUpdate = true;
 		invalidate();
 	}
 
-	function unhighlight_point() {
-		if (highlighted_satellite_index === null) {
-			return;
-		}
-
-		point_sizes![highlighted_satellite_index] = SATELLITE_BASE_SIZE;
+	function unhighlight_point(index: number) {
+		point_sizes![index] = SATELLITE_BASE_SIZE;
 		satellites_geometry!.attributes.size.needsUpdate = true;
 		invalidate();
-
-		highlighted_satellite_index = null;
 	}
 
 	function show_orbit(index: number) {
@@ -243,21 +276,14 @@
 		if (orbit_positions) {
 			orbit_line!.geometry.setPositions(orbit_positions.flatMap((p) => [p.x, p.y, p.z]));
 			orbit_line!.computeLineDistances();
-
-			displayed_orbit_index = index;
 		}
 	}
 
 	function hide_orbit() {
-		if (displayed_orbit_index === null) {
-			return;
-		}
 		// geometry needs at least 1 point or it errors
 		orbit_line!.geometry.setPositions([0, 0, 0]);
 		orbit_line!.computeLineDistances();
 		invalidate();
-
-		displayed_orbit_index = null;
 	}
 
 	// Raycasting to highlight satellites on mouseover
@@ -280,22 +306,6 @@
 			canvas.parentElement!.removeEventListener('click', on_canvas_click);
 		};
 	});
-
-	function handle_highlight_and_orbit_display() {
-		// console.log(
-		// 	`handle_highlight_and_orbit_display with hovered, selected: ${hovered_satellite_index}, ${selected_satellite_index}`
-		// );
-		if (selected_satellite_index) {
-			highlight_point(selected_satellite_index);
-			show_orbit(selected_satellite_index);
-		} else if (hovered_satellite_index) {
-			highlight_point(hovered_satellite_index);
-			show_orbit(hovered_satellite_index);
-		} else {
-			unhighlight_point();
-			hide_orbit();
-		}
-	}
 
 	function on_canvas_pointer_move() {
 		const hovered_satellite = raycast_mouse_to_satellite();
