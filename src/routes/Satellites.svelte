@@ -1,8 +1,21 @@
 <script lang="ts">
 	// TO-DO: Validate that satellite points mesh is correctly oriented
 
+	// TO-DO: Selecting one satellite then mousing over empty space
+	// un-highlights the selected satellite, mousing over another satellite then
+	// correctly re-highlights the selected satellite
+
+	// TO-DO: Tooltips are interfering with the functionality to click to select
+	// a satellite
+
+	// TO-DO: To raycast to distance satellites, we should increase the
+	// RAYCASTER_PADDING significantly and then add another check in
+	// raycast_to_satellite that we're under a certain **screen-space**
+	// threshold
+
 	import { onMount } from 'svelte';
 	import {
+		EARTH_MU,
 		eci_to_three,
 		load_tles,
 		OrbitalRegime,
@@ -27,7 +40,7 @@
 
 	import { OrbitControls as ThreeOrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
-	import { interactivity } from '@threlte/extras';
+	import { interactivity, HTML } from '@threlte/extras';
 
 	import { Line2 } from 'three/addons/lines/Line2.js';
 	import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
@@ -211,7 +224,7 @@
 
 	// Declared desired states
 	let hovered_satellite_index: number | null = null;
-	let selected_satellite_index: number | null = null;
+	let selected_satellite_index: number | null = $state(null);
 
 	// Tracked states used to unhighlight previously highlighted points
 	let last_hovered_satellite_index: number | null = null;
@@ -223,30 +236,36 @@
 			// Handle unhighligting selected point
 			unhighlight_point(last_selected_satellite_index);
 			last_selected_satellite_index = null;
+			selected_satellite_tooltip = null;
 		} else if (selected_satellite_index) {
 			// First unhighlight previous one if needed
 			if (last_selected_satellite_index) {
 				unhighlight_point(last_selected_satellite_index);
 				last_selected_satellite_index = null;
+				selected_satellite_tooltip = null;
 			}
 			// Then highlight
 			highlight_point(selected_satellite_index);
 			last_selected_satellite_index = selected_satellite_index;
+			selected_satellite_tooltip = satellite_tooptip(selected_satellite_index);
 		}
 
 		if (!hovered_satellite_index && last_hovered_satellite_index) {
 			// Handle highlighting hovered point
 			unhighlight_point(last_hovered_satellite_index);
 			last_hovered_satellite_index = null;
+			hovered_satellite_tooltip = null;
 		} else if (hovered_satellite_index) {
 			// First unhighlight previous one if needed
 			if (last_hovered_satellite_index) {
 				unhighlight_point(last_hovered_satellite_index);
 				last_hovered_satellite_index = null;
+				hovered_satellite_tooltip = null;
 			}
 			// Then highlight
 			highlight_point(hovered_satellite_index);
 			last_hovered_satellite_index = hovered_satellite_index;
+			hovered_satellite_tooltip = satellite_tooptip(hovered_satellite_index);
 		}
 
 		// Handle displaying orbit of selected, then hovered if no selected
@@ -426,6 +445,67 @@
 		handle_highlight_and_orbit_display();
 	}
 
+	// Reactive state for satellite tooltip display
+	type SatelliteTooltip = {
+		position: Vector3;
+		name: string;
+		orbital_regime: OrbitalRegime;
+		period: string;
+		semi_major_axis: string;
+		eccentricity: string;
+		inclination_deg: string;
+	};
+	let hovered_satellite_tooltip: SatelliteTooltip | null = $state(null);
+	let selected_satellite_tooltip: SatelliteTooltip | null = $state(null);
+
+	function satellite_tooptip(satellite_index: number): SatelliteTooltip {
+		const satrec = tles[satellite_index][1];
+
+		const mean_motion_rad_per_sec = satrec.no / 60;
+		const mean_motion_rev_per_day = (satrec.no * 1440) / (2 * Math.PI);
+		const inclination_deg = (satrec.inclo * 180) / Math.PI;
+		const eccentricity = satrec.ecco;
+
+		const semi_major_axis = Math.cbrt(
+			EARTH_MU / (mean_motion_rad_per_sec * mean_motion_rad_per_sec)
+		);
+
+		const period_seconds = 86400 / mean_motion_rev_per_day;
+
+		return {
+			name: tles[satellite_index][0],
+			position: target_satellite_positions[satellite_index][1],
+			orbital_regime: tles[satellite_index][2],
+			period: format_duration(period_seconds),
+			semi_major_axis: `${semi_major_axis.toFixed(0)} km`,
+			eccentricity: `${eccentricity.toFixed(6)}`,
+			inclination_deg: `${inclination_deg.toFixed(1)}°`
+		};
+	}
+
+	function format_duration(duration_seconds: number): string {
+		const days = Math.floor(duration_seconds / 86_400);
+		let remainder_seconds = duration_seconds % 86_400;
+
+		const hours = Math.floor(remainder_seconds / 3600);
+		remainder_seconds = remainder_seconds % 3600;
+
+		const minutes = Math.floor(remainder_seconds / 60);
+		remainder_seconds = remainder_seconds % 60;
+
+		const seconds = Math.floor(remainder_seconds);
+
+		let s = [];
+		if (days >= 1) {
+			s.push(`${days}d`);
+		}
+		s.push(`${hours}h`);
+		s.push(`${minutes}m`);
+		s.push(`${seconds}s`);
+
+		return s.join(' ');
+	}
+
 	// Register to OrbitControls zoom
 	onMount(() => {
 		orbit_controls.addEventListener('change', on_camera_move);
@@ -470,3 +550,107 @@
 		opacity={0.7}
 	/>
 </T.Line2>
+
+{#if hovered_satellite_tooltip}
+	<HTML
+		position={[
+			hovered_satellite_tooltip.position.x,
+			hovered_satellite_tooltip.position.y,
+			hovered_satellite_tooltip.position.z
+		]}
+	>
+		<div
+			class="
+				rounded-lg
+				border border-cyan-400/30
+				bg-black/60
+				backdrop-blur-md
+				px-4 py-2
+				pointer-events-none
+			"
+		>
+			<div
+				class="
+					absolute
+					inset-0
+					rounded-xl
+					bg-cyan-400/10
+					blur-lg
+				"
+			></div>
+			<div class="flex flex-col gap-1 whitespace-nowrap">
+				<span class="text-sm font-semibold tracking-wide text-cyan-200">
+					{hovered_satellite_tooltip.name}
+				</span>
+
+				<div class="text-xs text-slate-300 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
+					<span class="col-span-2">{OrbitalRegime[hovered_satellite_tooltip.orbital_regime]}</span>
+
+					<span class="text-neutral-500">period</span>
+					<span class="text-right"> {hovered_satellite_tooltip.period}</span>
+
+					<span class="text-neutral-500">semi-major axis</span>
+					<span class="text-right">{hovered_satellite_tooltip.semi_major_axis}</span>
+
+					<span class="text-neutral-500">eccentricity</span>
+					<span class="text-right"> {hovered_satellite_tooltip.eccentricity}</span>
+
+					<span class="text-neutral-500">inclination</span>
+					<span class="text-right"> {hovered_satellite_tooltip.inclination_deg}</span>
+				</div>
+			</div>
+		</div>
+	</HTML>
+{/if}
+
+{#if selected_satellite_tooltip}
+	<HTML
+		position={[
+			selected_satellite_tooltip.position.x,
+			selected_satellite_tooltip.position.y,
+			selected_satellite_tooltip.position.z
+		]}
+	>
+		<div
+			class="
+				rounded-lg
+				border border-cyan-400/30
+				bg-black/60
+				backdrop-blur-md
+				px-4 py-2
+				pointer-events-none
+			"
+		>
+			<div
+				class="
+					absolute
+					inset-0
+					rounded-xl
+					bg-cyan-400/10
+					blur-lg
+				"
+			></div>
+			<div class="flex flex-col gap-1 whitespace-nowrap">
+				<span class="text-sm font-semibold tracking-wide text-cyan-200">
+					{selected_satellite_tooltip.name}
+				</span>
+
+				<div class="text-xs text-slate-300 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
+					<span class="col-span-2">{OrbitalRegime[selected_satellite_tooltip.orbital_regime]}</span>
+
+					<span class="text-neutral-500">period</span>
+					<span class="text-right"> {selected_satellite_tooltip.period}</span>
+
+					<span class="text-neutral-500">semi-major axis</span>
+					<span class="text-right">{selected_satellite_tooltip.semi_major_axis}</span>
+
+					<span class="text-neutral-500">eccentricity</span>
+					<span class="text-right"> {selected_satellite_tooltip.eccentricity}</span>
+
+					<span class="text-neutral-500">inclination</span>
+					<span class="text-right"> {selected_satellite_tooltip.inclination_deg}</span>
+				</div>
+			</div>
+		</div>
+	</HTML>
+{/if}

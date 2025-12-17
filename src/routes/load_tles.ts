@@ -7,9 +7,9 @@ const DEV_LIMIT = 10000000
 const DEV = true
 
 
-const SIDEREAL_DAY_SECONDS = 86164.0905
-const EARTH_MU = 398600.4418; // km^3 / s^2
-const EARTH_RADIUS_KM = 6378.137;
+export const SIDEREAL_DAY_SECONDS = 86164.0905
+export const EARTH_MU = 398600.4418; // km^3 / s^2
+export const EARTH_RADIUS_KM = 6378.137;
 
 
 async function load_test_tles(): Promise<String> {
@@ -77,7 +77,7 @@ export enum OrbitalRegime {
 }
 
 
-function orbital_regime(satrec: SatRec): OrbitalRegime {
+export function orbital_regime(satrec: SatRec): OrbitalRegime {
     const mean_motion_rad_per_sec = satrec.no / 60
     const mean_motion_rev_per_day = (satrec.no * 1440) / (2 * Math.PI)
     const inclination_deg = satrec.inclo * 180 / Math.PI;

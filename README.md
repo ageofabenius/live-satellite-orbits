@@ -36,3 +36,12 @@ npm run build
 You can preview the production build with `npm run preview`.
 
 > To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+
+
+
+# TO-DO:
+
+- Time controls (set time, rewind, fast-forward)
+- Satellite filters
+- Satellite floating labels and tooltips
+- Satellite catalog with deeper info
