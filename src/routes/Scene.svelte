@@ -97,7 +97,6 @@
 
 <!-- Sun -->
 {#if earth_orbit_group}
-	<!-- <T.Object3D bind:ref={sun_target} /> -->
 	<T.DirectionalLight bind:ref={sun} />
 	<T.AmbientLight intensity={0.02} />
 {/if}
@@ -116,7 +115,7 @@
 
 		<!-- Earth day-rotation group -->
 		<T.Group bind:ref={earth_rotate_group}>
-			<Earth bind:earth_mesh />
+			<Earth bind:earth_mesh {simulated_time} />
 		</T.Group>
 
 		<Satellites
