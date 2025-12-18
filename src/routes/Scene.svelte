@@ -38,7 +38,7 @@
 		earth_orbit_group!.position.set(
 			Math.cos(-fractional_year_angle) * EARTH_ORBIT_KM,
 			0,
-			Math.sin(-fractional_year_angle) * EARTH_ORBIT_KM
+			Math.sin(fractional_year_angle) * EARTH_ORBIT_KM
 		);
 
 		// Point the Sun towards the Earth
@@ -46,9 +46,10 @@
 		sun?.target.updateMatrixWorld();
 	}
 
+	const earth_texture_rotation_offset_rad = Math.PI / 2;
 	function rotate_earth(target_date: Date) {
 		let fractional_day = target_date.getUTCHours() / 24 + target_date.getUTCMinutes() / 1440;
-		let fractional_day_angle = fractional_day * Math.PI * 2;
+		let fractional_day_angle_rad = fractional_day * Math.PI * 2;
 		// let new_earth_rotation = new Vector3(0, 0, 0);
 		// new_earth_rotation.applyAxisAngle(new Vector3(0, 1, 0), fractional_day_angle);
 		// earth_rotate_group!.rotation.set(
@@ -56,7 +57,7 @@
 		// 	new_earth_rotation.y,
 		// 	new_earth_rotation.z
 		// );
-		earth_rotate_group!.rotation.y = fractional_day_angle;
+		earth_rotate_group!.rotation.y = fractional_day_angle_rad + earth_texture_rotation_offset_rad;
 	}
 
 	let simulated_time: Date = $state(new Date());
@@ -104,7 +105,7 @@
 <!-- Earth orbit group -->
 <T.Group bind:ref={earth_orbit_group}>
 	<!-- Earth axial tilt group -->
-	<T.Group rotation.z={EARTH_AXIAL_TILT_RAD}>
+	<T.Group rotation.x={EARTH_AXIAL_TILT_RAD}>
 		<T.PerspectiveCamera
 			bind:ref={camera}
 			makeDefault
