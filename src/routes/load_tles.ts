@@ -3,28 +3,24 @@ import { Vector3 } from 'three';
 
 const CELESTRAK_ACTIVE_TLES_URL = "https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle"
 
-const DEV = false
 
 export const SIDEREAL_DAY_SECONDS = 86164.0905
 export const EARTH_MU = 398600.4418; // km^3 / s^2
 export const EARTH_RADIUS_KM = 6378.137;
 
 
-async function load_test_tles(): Promise<String> {
-    const text = await import('../../test/test_data/active.txt?raw').then(m => m.default);
-    return text;
-}
-
-async function fetch_tles_from_celestrak(): Promise<string> {
-    console.log("Fetching TLEs from Celestrak...")
-    console.time("Fetched TLEs from Celestrak...")
-    const res = await fetch(CELESTRAK_ACTIVE_TLES_URL)
+async function fetch_tles_from_celestrak_netlify_mirror(): Promise<string> {
+    console.log("Fetching TLEs from Netlify mirror of Celestrak...")
+    console.time("Fetched TLEs from Netlify mirror of Celestrak...")
+    const res = await fetch("tles")
     const str = (await res.text())
 
     console.timeEnd("Fetched TLEs from Celestrak...")
 
     return str
 }
+
+
 
 const LOCAL_STORAGE_KEY = "tles"
 const LOCAL_STORAGE_AGE_KEY = "tles_cached_at"
@@ -60,7 +56,7 @@ async function fetch_tles(): Promise<string> {
     if (cached_tles) {
         return cached_tles
     }
-    const celestrak_tles = await fetch_tles_from_celestrak()
+    const celestrak_tles = await fetch_tles_from_celestrak_netlify_mirror()
     cache_tles(celestrak_tles)
     return celestrak_tles
 }
@@ -70,13 +66,7 @@ export async function load_tles(): Promise<[string, SatRec, OrbitalRegime][]> {
     console.time("Loaded TLEs")
 
     console.time("Fetched TLEs")
-    let tles_str;
-    if (DEV) {
-        console.warn("In DEV mode, loading test TLEs from static file")
-        tles_str = (await load_test_tles())
-    } else {
-        tles_str = (await fetch_tles())
-    }
+    let tles_str = await fetch_tles()
     console.timeEnd("Fetched TLEs")
 
     console.time("Parsed TLEs")
