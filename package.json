@@ -31,6 +31,8 @@
 		"vite": "^7.2.2"
 	},
 	"dependencies": {
+		"@netlify/blobs": "^10.4.4",
+		"@netlify/functions": "^5.1.1",
 		"@threlte/core": "^8.3.1",
 		"@threlte/extras": "^9.7.1",
 		"satellite.js": "^6.0.1",
