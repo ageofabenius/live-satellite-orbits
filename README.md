@@ -43,5 +43,4 @@ You can preview the production build with `npm run preview`.
 
 - Time controls (set time, rewind, fast-forward)
 - Satellite filters
-- Satellite floating labels and tooltips
 - Satellite catalog with deeper info

@@ -1,18 +1,6 @@
 <script lang="ts">
 	// TO-DO: Validate that satellite points mesh is correctly oriented
 
-	// TO-DO: Selecting one satellite then mousing over empty space
-	// un-highlights the selected satellite, mousing over another satellite then
-	// correctly re-highlights the selected satellite
-
-	// TO-DO: Tooltips are interfering with the functionality to click to select
-	// a satellite
-
-	// TO-DO: To raycast to distance satellites, we should increase the
-	// RAYCASTER_PADDING significantly and then add another check in
-	// raycast_to_satellite that we're under a certain **screen-space**
-	// threshold
-
 	import { onMount } from 'svelte';
 	import {
 		EARTH_MU,
@@ -251,10 +239,17 @@
 		}
 
 		if (!hovered_satellite_index && last_hovered_satellite_index) {
-			// Handle highlighting hovered point
-			unhighlight_point(last_hovered_satellite_index);
-			last_hovered_satellite_index = null;
-			hovered_satellite_tooltip = null;
+			if (last_hovered_satellite_index === selected_satellite_index) {
+				// Do nothing, this occurs when a satellite is first selected
+				// and the mouse then leaves
+				last_hovered_satellite_index = null;
+				hovered_satellite_tooltip = null;
+			} else {
+				// Handle highlighting hovered point
+				unhighlight_point(last_hovered_satellite_index);
+				last_hovered_satellite_index = null;
+				hovered_satellite_tooltip = null;
+			}
 		} else if (hovered_satellite_index) {
 			// First unhighlight previous one if needed
 			if (last_hovered_satellite_index) {
@@ -558,6 +553,7 @@
 			hovered_satellite_tooltip.position.y,
 			hovered_satellite_tooltip.position.z
 		]}
+		class="pointer-events-none"
 	>
 		<div
 			class="
