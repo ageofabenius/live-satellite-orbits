@@ -3,9 +3,7 @@ import { Vector3 } from 'three';
 
 const CELESTRAK_ACTIVE_TLES_URL = "https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle"
 
-const DEV_LIMIT = 10000000
-const DEV = true
-
+const DEV = false
 
 export const SIDEREAL_DAY_SECONDS = 86164.0905
 export const EARTH_MU = 398600.4418; // km^3 / s^2
@@ -17,18 +15,56 @@ async function load_test_tles(): Promise<String> {
     return text;
 }
 
-// TO-DO: Add browser local storage caching of active.txt from Celestrak
-
-async function fetch_tles(): Promise<string> {
+async function fetch_tles_from_celestrak(): Promise<string> {
     console.log("Fetching TLEs from Celestrak...")
-    console.time("Fetched TLEs")
+    console.time("Fetched TLEs from Celestrak...")
     const res = await fetch(CELESTRAK_ACTIVE_TLES_URL)
     const str = (await res.text())
 
-    console.timeEnd("Fetched TLEs")
+    console.timeEnd("Fetched TLEs from Celestrak...")
 
     return str
 }
+
+const LOCAL_STORAGE_KEY = "tles"
+const LOCAL_STORAGE_AGE_KEY = "tles_cached_at"
+const MAXIMUM_ALLOWABLE_CACHE_AGE_MS = 6 * 3600 * 1000
+
+function cache_tles(tles: string) {
+    localStorage.setItem(LOCAL_STORAGE_KEY, tles)
+    localStorage.setItem(LOCAL_STORAGE_AGE_KEY, new Date().toISOString())
+}
+
+function load_tles_from_cache(): string | null {
+    const cached_time_string = localStorage.getItem(LOCAL_STORAGE_AGE_KEY)
+    if (!cached_time_string) {
+        return null
+    }
+    const cached_time = new Date(cached_time_string)
+    const now = new Date()
+    const cache_age_ms = now.getTime() - cached_time.getTime()
+    if (cache_age_ms > MAXIMUM_ALLOWABLE_CACHE_AGE_MS) {
+        // Expunge cache
+        localStorage.removeItem(LOCAL_STORAGE_KEY)
+        localStorage.removeItem(LOCAL_STORAGE_AGE_KEY)
+
+        return null
+    }
+
+    return localStorage.getItem(LOCAL_STORAGE_KEY)
+}
+
+async function fetch_tles(): Promise<string> {
+    // First, try loading from localStorage cache
+    const cached_tles = load_tles_from_cache()
+    if (cached_tles) {
+        return cached_tles
+    }
+    const celestrak_tles = await fetch_tles_from_celestrak()
+    cache_tles(celestrak_tles)
+    return celestrak_tles
+}
+
 
 export async function load_tles(): Promise<[string, SatRec, OrbitalRegime][]> {
     console.time("Loaded TLEs")
@@ -36,6 +72,7 @@ export async function load_tles(): Promise<[string, SatRec, OrbitalRegime][]> {
     console.time("Fetched TLEs")
     let tles_str;
     if (DEV) {
+        console.warn("In DEV mode, loading test TLEs from static file")
         tles_str = (await load_test_tles())
     } else {
         tles_str = (await fetch_tles())
@@ -51,7 +88,7 @@ export async function load_tles(): Promise<[string, SatRec, OrbitalRegime][]> {
 
     console.time("Initialized TLEs")
     let tles: [string, SatRec, OrbitalRegime][] = []
-    for (let i = 0; i < Math.min(lines!.length, DEV_LIMIT); i += 3) {
+    for (let i = 0; i < lines!.length; i += 3) {
         const line_0 = lines![i]
         const line_1 = lines![i + 1]
         const line_2 = lines![i + 2]
