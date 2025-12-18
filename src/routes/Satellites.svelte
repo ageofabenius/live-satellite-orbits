@@ -215,12 +215,12 @@
 
 	function handle_highlight_and_orbit_display() {
 		// Handle highlighting for both hovered and selected points
-		if (!selected_satellite_index && last_selected_satellite_index) {
+		if (selected_satellite_index === null && last_selected_satellite_index !== null) {
 			// Handle unhighligting selected point
 			unhighlight_point(last_selected_satellite_index);
 			last_selected_satellite_index = null;
 			selected_satellite_tooltip = null;
-		} else if (selected_satellite_index) {
+		} else if (selected_satellite_index !== null) {
 			// First unhighlight previous one if needed
 			if (last_selected_satellite_index) {
 				unhighlight_point(last_selected_satellite_index);
@@ -233,7 +233,7 @@
 			selected_satellite_tooltip = satellite_tooptip(selected_satellite_index);
 		}
 
-		if (!hovered_satellite_index && last_hovered_satellite_index) {
+		if (hovered_satellite_index === null && last_hovered_satellite_index !== null) {
 			if (last_hovered_satellite_index === selected_satellite_index) {
 				// Do nothing, this occurs when a satellite is first selected
 				// and the mouse then leaves
@@ -245,7 +245,7 @@
 				last_hovered_satellite_index = null;
 				hovered_satellite_tooltip = null;
 			}
-		} else if (hovered_satellite_index) {
+		} else if (hovered_satellite_index !== null) {
 			// First unhighlight previous one if needed
 			if (last_hovered_satellite_index) {
 				unhighlight_point(last_hovered_satellite_index);
@@ -259,9 +259,9 @@
 		}
 
 		// Handle displaying orbit of selected, then hovered if no selected
-		if (selected_satellite_index) {
+		if (selected_satellite_index !== null) {
 			show_orbit(selected_satellite_index);
-		} else if (hovered_satellite_index) {
+		} else if (hovered_satellite_index !== null) {
 			show_orbit(hovered_satellite_index);
 		} else {
 			hide_orbit();
