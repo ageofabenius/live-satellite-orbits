@@ -40,17 +40,12 @@
 		LineMaterial
 	});
 
+	import * as SceneColors from './scene_colors.ts';
+
 	const SATELLITE_BASE_SIZE = 5;
 	const SATELLITE_HIGHLIGHTED_SIZE = 20;
 	const RAYCASTER_PADDING = 200;
 	const BASE_TRANSPARENCY = 1;
-
-	const OrbitalRegimeColorMap: Record<OrbitalRegime, Vector3> = {
-		[OrbitalRegime.LEO]: new Vector3(0.75, 0.84, 0.92),
-		[OrbitalRegime.MEO]: new Vector3(0.75, 0.84, 0.92),
-		[OrbitalRegime.GEO]: new Vector3(0.75, 0.84, 0.92),
-		[OrbitalRegime.Other]: new Vector3(0.75, 0.84, 0.92)
-	};
 
 	let {
 		earth_mesh,
@@ -127,11 +122,11 @@
 
 		// Initialize color array and set point colors
 		colors = new Float32Array(tles.length * 3).fill(1);
-		tles.forEach(([_name, _satrec, orbital_regime], i) => {
-			const color = OrbitalRegimeColorMap[orbital_regime].clone();
-			colors![i * 3] = color.x;
-			colors![i * 3 + 1] = color.y;
-			colors![i * 3 + 2] = color.z;
+		const satellite_color = SceneColors.SATELLITE_POINTS;
+		tles.forEach(([_name, _satrec, _orbital_regime], i) => {
+			colors![i * 3] = satellite_color[0];
+			colors![i * 3 + 1] = satellite_color[1];
+			colors![i * 3 + 2] = satellite_color[2];
 		});
 		satellites_geometry.setAttribute('color', new BufferAttribute(colors, 3));
 
@@ -558,10 +553,10 @@
 		<div
 			class="
 				rounded-lg
-				border border-cyan-400/30
-				bg-black/60
+				border {SceneColors.TOOLTIP_EDGE}
+				{SceneColors.TOOLTIP_FILL}
 				backdrop-blur-md
-				px-4 py-2
+				px-3 py-2
 				pointer-events-none
 			"
 		>
@@ -570,28 +565,30 @@
 					absolute
 					inset-0
 					rounded-xl
-					bg-cyan-400/10
+					{SceneColors.TOOLTIP_GLOW}
 					blur-lg
 				"
 			></div>
 			<div class="flex flex-col gap-1 whitespace-nowrap">
-				<span class="text-sm font-semibold tracking-wide text-cyan-200">
+				<span class="text-sm font-semibold tracking-wide {SceneColors.TOOLTIP_HEADER_TEXT}">
 					{hovered_satellite_tooltip.name}
 				</span>
 
-				<div class="text-xs text-slate-300 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
+				<div
+					class="text-xs {SceneColors.TOOLTIP_REGULAR_TEXT} grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5"
+				>
 					<span class="col-span-2">{OrbitalRegime[hovered_satellite_tooltip.orbital_regime]}</span>
 
-					<span class="text-neutral-500">period</span>
+					<span class={SceneColors.TOOLTIP_MUTED_TEXT}>period</span>
 					<span class="text-right"> {hovered_satellite_tooltip.period}</span>
 
-					<span class="text-neutral-500">semi-major axis</span>
+					<span class={SceneColors.TOOLTIP_MUTED_TEXT}>semi-major axis</span>
 					<span class="text-right">{hovered_satellite_tooltip.semi_major_axis}</span>
 
-					<span class="text-neutral-500">eccentricity</span>
+					<span class={SceneColors.TOOLTIP_MUTED_TEXT}>eccentricity</span>
 					<span class="text-right"> {hovered_satellite_tooltip.eccentricity}</span>
 
-					<span class="text-neutral-500">inclination</span>
+					<span class={SceneColors.TOOLTIP_MUTED_TEXT}>inclination</span>
 					<span class="text-right"> {hovered_satellite_tooltip.inclination_deg}</span>
 				</div>
 			</div>
@@ -606,14 +603,15 @@
 			selected_satellite_tooltip.position.y,
 			selected_satellite_tooltip.position.z
 		]}
+		class="pointer-events-none"
 	>
 		<div
 			class="
 				rounded-lg
-				border border-cyan-400/30
-				bg-black/60
+				border {SceneColors.TOOLTIP_EDGE}
+				{SceneColors.TOOLTIP_FILL}
 				backdrop-blur-md
-				px-4 py-2
+				px-3 py-2
 				pointer-events-none
 			"
 		>
@@ -622,28 +620,30 @@
 					absolute
 					inset-0
 					rounded-xl
-					bg-cyan-400/10
+					{SceneColors.TOOLTIP_GLOW}
 					blur-lg
 				"
 			></div>
 			<div class="flex flex-col gap-1 whitespace-nowrap">
-				<span class="text-sm font-semibold tracking-wide text-cyan-200">
+				<span class="text-sm font-semibold tracking-wide {SceneColors.TOOLTIP_HEADER_TEXT}">
 					{selected_satellite_tooltip.name}
 				</span>
 
-				<div class="text-xs text-slate-300 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
+				<div
+					class="text-xs {SceneColors.TOOLTIP_REGULAR_TEXT} grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5"
+				>
 					<span class="col-span-2">{OrbitalRegime[selected_satellite_tooltip.orbital_regime]}</span>
 
-					<span class="text-neutral-500">period</span>
+					<span class={SceneColors.TOOLTIP_MUTED_TEXT}>period</span>
 					<span class="text-right"> {selected_satellite_tooltip.period}</span>
 
-					<span class="text-neutral-500">semi-major axis</span>
+					<span class={SceneColors.TOOLTIP_MUTED_TEXT}>semi-major axis</span>
 					<span class="text-right">{selected_satellite_tooltip.semi_major_axis}</span>
 
-					<span class="text-neutral-500">eccentricity</span>
+					<span class={SceneColors.TOOLTIP_MUTED_TEXT}>eccentricity</span>
 					<span class="text-right"> {selected_satellite_tooltip.eccentricity}</span>
 
-					<span class="text-neutral-500">inclination</span>
+					<span class={SceneColors.TOOLTIP_MUTED_TEXT}>inclination</span>
 					<span class="text-right"> {selected_satellite_tooltip.inclination_deg}</span>
 				</div>
 			</div>
