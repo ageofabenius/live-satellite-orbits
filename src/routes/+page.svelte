@@ -4,6 +4,8 @@
 	import { SCENE_BACKGROUND } from './scene_colors';
 	import { flip } from 'svelte/animate';
 	import { fade, fly } from 'svelte/transition';
+	import InfoOverlay from './InfoOverlay.svelte';
+	import SceneUIOverlay from './SceneUIOverlay.svelte';
 
 	let is_loading = $state(true);
 	let loading_components: Record<string, boolean> = $state({});
@@ -52,52 +54,9 @@
 	loading_message('initializing scene');
 </script>
 
-<div class="h-screen w-screen p-4 bg-gray-900">
-	<div class="size-full {SCENE_BACKGROUND} relative">
-		<div
-			class="
-				absolute
-				z-10
-				pointer-events-none
-				size-full
-				bg-black/80 backgrop-blur-sm
-				{is_loading ? 'opacity-100' : 'opacity-0'}
-				transition-opacity duration-500
-				text-cyan-300
-				grid grid-cols-3 grid-rows-5 items-center
-				"
-		>
-			<div
-				class="row-start-3 col-start-2 grid place-items-center
-			 size-full"
-			>
-				<div class="col-start-1 row-start-1">loading...</div>
-				<div
-					class="col-start-1 row-start-1
-					size-24
-					rounded-full
-					border-4 border-cyan-400/30
-					border-t-cyan-400
-					animate-spin
-					"
-				></div>
-			</div>
-			<div
-				class="row-start-4 row-end-6 col-start-2 size-full flex flex-col
-			gap-2 items-center text-xs font-mono"
-			>
-				{#each displayed_loading_messages as message (message)}
-					<div
-						class=""
-						in:fly={{ y: 20, duration: 250, delay: 300 }}
-						out:fade={{ duration: 300 }}
-						animate:flip={{ duration: 400, easing: (t) => t }}
-					>
-						{message}
-					</div>
-				{/each}
-			</div>
-		</div>
+<div class="h-screen w-screen size-full {SCENE_BACKGROUND} relative">
+	<!-- Canvas scene -->
+	<div class="absolute inset-0 z-0">
 		<Canvas>
 			<Scene
 				loading_started={register_loading_started}
@@ -105,5 +64,60 @@
 				{loading_message}
 			/>
 		</Canvas>
+	</div>
+
+	<!-- UI Overlay -->
+	<div class="absolute size-full pointer-events-none z-11">
+		<InfoOverlay />
+	</div>
+
+	<!-- <div class="absolute size-full pointer-events-none z-9">
+		<SceneUIOverlay />
+	</div> -->
+
+	<!-- Loading screen -->
+	<div
+		class="
+				absolute
+				z-10
+				pointer-events-none
+				size-full
+				bg-black/80 backdrop-blur-sm
+				{is_loading ? 'opacity-100' : 'opacity-0'}
+				transition-opacity duration-500
+				text-cyan-300
+				grid grid-cols-3 grid-rows-5 items-center
+				"
+	>
+		<div
+			class="row-start-3 col-start-2 grid place-items-center
+			 size-full"
+		>
+			<div class="col-start-1 row-start-1">loading...</div>
+			<div
+				class="col-start-1 row-start-1
+					size-24
+					rounded-full
+					border-4 border-cyan-400/30
+					border-t-cyan-400
+					animate-spin
+					"
+			></div>
+		</div>
+		<div
+			class="row-start-4 row-end-6 col-start-2 size-full flex flex-col
+			gap-2 items-center text-xs font-mono"
+		>
+			{#each displayed_loading_messages as message (message)}
+				<div
+					class=""
+					in:fly={{ y: 20, duration: 250, delay: 300 }}
+					out:fade={{ duration: 300 }}
+					animate:flip={{ duration: 400, easing: (t) => t }}
+				>
+					{message}
+				</div>
+			{/each}
+		</div>
 	</div>
 </div>
