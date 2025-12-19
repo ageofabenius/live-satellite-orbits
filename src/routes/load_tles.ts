@@ -47,13 +47,21 @@ function load_tles_from_cache(): string | null {
 
 async function fetch_tles(): Promise<string> {
     // First, try loading from localStorage cache
+    console.time("Loaded cached TLEs from localStorage")
     const cached_tles = load_tles_from_cache()
     if (cached_tles) {
+        console.timeEnd("Loaded cached TLEs from localStorage")
         return cached_tles
     }
 
+    console.time("Fetched TLEs from Celestrak mirror")
     const celestrak_tles = await fetch_tles_from_celestrak_netlify_mirror()
+    console.timeEnd("Fetched TLEs from Celestrak mirror")
+
+    console.time(`Caching TLEs for ${MAXIMUM_ALLOWABLE_CACHE_AGE_MS / 1000} seconds`)
     cache_tles(celestrak_tles)
+    console.timeEnd(`Caching TLEs for ${MAXIMUM_ALLOWABLE_CACHE_AGE_MS / 1000} seconds`)
+
     return celestrak_tles
 }
 
@@ -61,9 +69,7 @@ async function fetch_tles(): Promise<string> {
 export async function load_tles(): Promise<[string, SatRec, OrbitalRegime][]> {
     console.time("Loaded TLEs")
 
-    console.time("Fetched TLEs")
     let tles_str = await fetch_tles()
-    console.timeEnd("Fetched TLEs")
 
     console.time("Parsed TLEs")
     const lines = tles_str
