@@ -11,6 +11,9 @@ export default defineConfig({
 				path.resolve(process.cwd(), 'test/test_data'),
 				path.resolve(process.cwd(), 'static/textures')
 			]
-		}
+		},
+		allowedHosts: [
+			"devserver-main--live-satellite-orbits.netlify.app"
+		]
 	}
 });
