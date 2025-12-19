@@ -53,7 +53,8 @@
 		tick_rate_seconds,
 		orbit_controls,
 		loading_started,
-		loading_complete
+		loading_complete,
+		loading_message
 	}: {
 		earth_mesh: Mesh;
 		simulated_time: Date;
@@ -61,9 +62,12 @@
 		orbit_controls: ThreeOrbitControls;
 		loading_started: (name: string) => void;
 		loading_complete: (name: string) => void;
+		loading_message: (name: string) => void;
 	} = $props();
 
-	loading_started('Satellites');
+	onMount(() => {
+		loading_started('Satellites');
+	});
 
 	let points_mesh: Points | null = $state(null);
 
@@ -127,8 +131,10 @@
 
 	onMount(async () => {
 		// Load TLEs
+		loading_message('loading satellite state vectors');
 		tles = await load_tles();
 
+		loading_message('initializing satellite geometry');
 		// Initialize size array and set base point sizes
 		point_sizes = new Float32Array(tles.length).fill(SATELLITE_BASE_SIZE);
 		satellites_geometry.setAttribute('size', new BufferAttribute(point_sizes, 1));
@@ -160,6 +166,7 @@
 
 		satellites_position_attribute = satellites_geometry.getAttribute('position') as BufferAttribute;
 
+		loading_message('propagating satellite orbits to current time');
 		start_satellite_positions = propagate_to_time(tles, simulated_time);
 		target_satellite_positions = start_satellite_positions;
 

@@ -6,15 +6,22 @@
 	import { Mesh, PerspectiveCamera, type DirectionalLight, type Group } from 'three';
 	import { OrbitControls as ThreeOrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 
 	let {
 		loading_started,
-		loading_complete
+		loading_complete,
+		loading_message
 	}: {
 		loading_started: (name: string) => void;
 		loading_complete: (name: string) => void;
+		loading_message: (name: string) => void;
 	} = $props();
+
+	onMount(async () => {
+		loading_message('initializing solar system');
+		await tick();
+	});
 
 	const TICK_RATE_SECONDS = 5;
 
@@ -124,7 +131,13 @@
 
 		<!-- Earth day-rotation group -->
 		<T.Group bind:ref={earth_rotate_group}>
-			<Earth bind:earth_mesh {simulated_time} {loading_started} {loading_complete} />
+			<Earth
+				bind:earth_mesh
+				{simulated_time}
+				{loading_started}
+				{loading_complete}
+				{loading_message}
+			/>
 		</T.Group>
 
 		<Satellites
@@ -134,6 +147,7 @@
 			orbit_controls={orbit_controls!}
 			{loading_started}
 			{loading_complete}
+			{loading_message}
 		/>
 	</T.Group>
 </T.Group>

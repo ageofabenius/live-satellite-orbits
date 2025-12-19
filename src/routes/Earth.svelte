@@ -18,14 +18,19 @@
 		earth_mesh = $bindable(),
 		simulated_time,
 		loading_started,
-		loading_complete
+		loading_complete,
+		loading_message
 	}: {
 		earth_mesh: Mesh;
 		simulated_time: Date;
 		loading_started: (name: string) => void;
 		loading_complete: (name: string) => void;
+		loading_message: (name: string) => void;
 	} = $props();
-	loading_started('Earth');
+
+	onMount(() => {
+		loading_started('Earth');
+	});
 
 	//// Earth mesh and textures ////
 	const EARTH_RADIUS_KM = 6371;
@@ -45,6 +50,8 @@
 	onMount(async () => {
 		const loader = new TextureLoader();
 
+		loading_message('loading Earth textures');
+
 		[day_texture, night_texture, cloud_texture, normal_map, specular_map] = await Promise.all([
 			loader.loadAsync('/textures/8k_earth_daymap.avif'),
 			loader.loadAsync('/textures/8k_earth_nightmap.avif'),
@@ -53,12 +60,16 @@
 			loader.loadAsync('/textures/8k_earth_specular_map.avif')
 		]);
 
+		loading_message('initializing Earth geometry');
+
 		day_texture.colorSpace = SRGBColorSpace;
 		night_texture.colorSpace = SRGBColorSpace;
 		cloud_texture.colorSpace = LinearSRGBColorSpace;
 
 		normal_map.colorSpace = LinearSRGBColorSpace;
 		specular_map.colorSpace = LinearSRGBColorSpace;
+
+		loading_message('compiling Earth shaders');
 
 		earth_material!.onBeforeCompile = (shader) => {
 			shader.uniforms.sunDirectionWorld = { value: sun_direction_world };
