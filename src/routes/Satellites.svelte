@@ -51,13 +51,19 @@
 		earth_mesh,
 		simulated_time,
 		tick_rate_seconds,
-		orbit_controls
+		orbit_controls,
+		loading_started,
+		loading_complete
 	}: {
 		earth_mesh: Mesh;
 		simulated_time: Date;
 		tick_rate_seconds: number;
 		orbit_controls: ThreeOrbitControls;
+		loading_started: (name: string) => void;
+		loading_complete: (name: string) => void;
 	} = $props();
+
+	loading_started('Satellites');
 
 	let points_mesh: Points | null = $state(null);
 
@@ -162,6 +168,8 @@
 			const [name, position] = start_satellite_positions[i];
 			satellites_position_attribute.setXYZ(i, position.x, position.y, position.z);
 		}
+
+		loading_complete('Satellites');
 	});
 
 	function propagate_to_time(

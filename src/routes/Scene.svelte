@@ -8,6 +8,14 @@
 
 	import { onMount } from 'svelte';
 
+	let {
+		loading_started,
+		loading_complete
+	}: {
+		loading_started: (name: string) => void;
+		loading_complete: (name: string) => void;
+	} = $props();
+
 	const TICK_RATE_SECONDS = 5;
 
 	const EARTH_ORBIT_KM = 150_000_000;
@@ -116,7 +124,7 @@
 
 		<!-- Earth day-rotation group -->
 		<T.Group bind:ref={earth_rotate_group}>
-			<Earth bind:earth_mesh {simulated_time} />
+			<Earth bind:earth_mesh {simulated_time} {loading_started} {loading_complete} />
 		</T.Group>
 
 		<Satellites
@@ -124,6 +132,8 @@
 			{simulated_time}
 			tick_rate_seconds={TICK_RATE_SECONDS}
 			orbit_controls={orbit_controls!}
+			{loading_started}
+			{loading_complete}
 		/>
 	</T.Group>
 </T.Group>
