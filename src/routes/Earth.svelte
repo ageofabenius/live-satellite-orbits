@@ -100,8 +100,6 @@
 				#include <common>
 				uniform vec3 sunDirectionWorld;
 				varying vec3 vWorldNormal;
-				precision highp float;
-				precision highp int;
 				`
 			);
 
