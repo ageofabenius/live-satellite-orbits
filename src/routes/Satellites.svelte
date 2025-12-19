@@ -77,6 +77,13 @@
 	});
 
 	$effect(() => {
+		// Reference simulated_time, otherwise the if statement below prevents
+		// reactivity
+		simulated_time;
+		if (tles.length == 0) {
+			// Don't start propagating before TLEs are loaded
+			return;
+		}
 		propagate_new_target_positions(tles, simulated_time);
 	});
 

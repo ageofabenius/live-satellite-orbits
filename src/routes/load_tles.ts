@@ -135,7 +135,7 @@ export function orbital_regime(satrec: SatRec): OrbitalRegime {
 }
 
 export function propagate_tles_to_target_time(tles: [string, SatRec, OrbitalRegime][], target_time: Date): [string, PositionAndVelocity | null][] {
-    console.log('Propagating TLEs...')
+    console.log(`Propagating TLEs to ${target_time.toISOString()}`)
     console.time("Propagated TLEs")
 
     let target_time_cloned = new Date(target_time.getTime())
