@@ -119,12 +119,12 @@
 			<Earth bind:earth_mesh {simulated_time} />
 		</T.Group>
 
-		<Satellites
+		<!-- <Satellites
 			earth_mesh={earth_mesh!}
 			{simulated_time}
 			tick_rate_seconds={TICK_RATE_SECONDS}
 			orbit_controls={orbit_controls!}
-		/>
+		/> -->
 	</T.Group>
 </T.Group>
 

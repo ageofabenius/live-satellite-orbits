@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { T } from '@threlte/core';
+	import { T, useTask } from '@threlte/core';
 	import {
 		TextureLoader,
 		Mesh,
@@ -12,6 +12,8 @@
 
 	import { interactivity } from '@threlte/extras';
 	import { onMount } from 'svelte';
+	import { flip } from 'svelte/animate';
+	import { LOADING_WIREFRAME } from './scene_colors';
 	interactivity();
 
 	let { earth_mesh = $bindable(), simulated_time }: { earth_mesh: Mesh; simulated_time: Date } =
@@ -120,9 +122,36 @@
 		earth_mesh.getWorldPosition(earth_position);
 		sun_direction_world.copy(earth_position.normalize().negate());
 	});
+
+	// Loading sphere rotation
+	let loading_sphere_rotation = $state(0);
+	let t = 0;
+	let rotation_amplitude = Math.PI / 4;
+	let rotation_speed = 5;
+	// Loading sphere geometry growth
+	let growth_start = 2;
+	let growth_end = 8;
+	let growth_multiplier = 1;
+	let loading_sphere_num_faces: number = $state(growth_start);
+	useTask((delta) => {
+		t += delta;
+
+		loading_sphere_rotation = Math.sin(t * rotation_speed) * rotation_amplitude;
+
+		// Align the change in number of faces with the end bounds of loading_sphere_rotation
+		const current = Math.cos(t * rotation_speed);
+		const next = Math.cos((t + delta) * rotation_speed);
+		if (next * current < 0) {
+			// We just crossed zero
+			loading_sphere_num_faces = Math.min(loading_sphere_num_faces + growth_multiplier, growth_end);
+			if (loading_sphere_num_faces >= growth_end || loading_sphere_num_faces <= growth_start) {
+				growth_multiplier *= -1;
+			}
+		}
+	});
 </script>
 
-{#if day_texture && night_texture && cloud_texture && normal_map && specular_map}
+{#if false && day_texture && night_texture && cloud_texture && normal_map && specular_map}
 	<T.Group scale={EARTH_RADIUS_KM}>
 		<T.Mesh bind:ref={earth_mesh}>
 			<T.SphereGeometry args={[1, 128, 128]} />
@@ -149,6 +178,22 @@
 				transparent={true}
 				opacity={1}
 				depthWrite{false}
+			/>
+		</T.Mesh>
+	</T.Group>
+{:else}
+	<T.Group scale={EARTH_RADIUS_KM}>
+		<T.Mesh bind:rotation.y={loading_sphere_rotation}>
+			<T.SphereGeometry args={[1, loading_sphere_num_faces, loading_sphere_num_faces]} />
+			<T.MeshStandardMaterial
+				wireframe={true}
+				color={[...LOADING_WIREFRAME]}
+				emissive={[...LOADING_WIREFRAME]}
+				emissiveIntensity={0.3}
+				toneMapped={false}
+				depthWrite={false}
+				opacity={0.5}
+				transparent={true}
 			/>
 		</T.Mesh>
 	</T.Group>
