@@ -7,6 +7,7 @@
 	import { OrbitControls as ThreeOrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 	import { onMount, tick } from 'svelte';
+	import { TICK_RATE_SECONDS } from './sim_config';
 
 	let {
 		loading_started,
@@ -22,8 +23,6 @@
 		loading_message('initializing solar system');
 		await tick();
 	});
-
-	const TICK_RATE_SECONDS = 5;
 
 	const EARTH_ORBIT_KM = 150_000_000;
 	const YEAR_DAYS = 365.2422;
