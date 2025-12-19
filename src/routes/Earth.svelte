@@ -171,9 +171,10 @@
 			<T.MeshStandardMaterial
 				map={cloud_texture}
 				alphaMap={cloud_texture}
-				transparent={true}
 				opacity={1}
 				depthWrite{false}
+				depthTest={false}
+				transparent={true}
 			/>
 		</T.Mesh>
 	</T.Group>
