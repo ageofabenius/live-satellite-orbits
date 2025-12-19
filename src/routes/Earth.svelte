@@ -43,11 +43,11 @@
 		// ]);
 
 		[day_texture, night_texture, cloud_texture, normal_map, specular_map] = await Promise.all([
-			loader.loadAsync('/textures/8k_earth_daymap.jpg'),
-			loader.loadAsync('/textures/8k_earth_nightmap.jpg'),
-			loader.loadAsync('/textures/8k_earth_clouds.jpg'),
-			loader.loadAsync('/textures/8k_earth_normal_map.png'),
-			loader.loadAsync('/textures/8k_earth_specular_map.png')
+			loader.loadAsync('/textures/8k_earth_daymap.avif'),
+			loader.loadAsync('/textures/8k_earth_nightmap.avif'),
+			loader.loadAsync('/textures/8k_earth_clouds.avif'),
+			loader.loadAsync('/textures/8k_earth_normal_map.avif'),
+			loader.loadAsync('/textures/8k_earth_specular_map.avif')
 		]);
 
 		day_texture.colorSpace = SRGBColorSpace;
