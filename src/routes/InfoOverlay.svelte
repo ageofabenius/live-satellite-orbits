@@ -15,7 +15,7 @@
 
 <!-- Identity + buttons -->
 <div class="absolute top-2 left-2 menu-panel">
-	<div class="flex items-center gap-2">
+	<div class="flex flex-wrap items-center gap-2">
 		<!-- Title -->
 		<div class="text-sm font-semibold tracking-wide">Live Satellite Orbits</div>
 
