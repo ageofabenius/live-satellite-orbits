@@ -147,7 +147,7 @@
 
 {#if day_texture && night_texture && cloud_texture && normal_map && specular_map}
 	<T.Group scale={EARTH_RADIUS_KM}>
-		<T.Mesh bind:ref={earth_mesh}>
+		<T.Mesh bind:ref={earth_mesh} renderOrder={0}>
 			<T.SphereGeometry args={[1, 128, 128]} />
 			<T.MeshPhysicalMaterial
 				bind:ref={earth_material}
@@ -164,7 +164,7 @@
 			/>
 		</T.Mesh>
 
-		<T.Mesh scale={1.005}>
+		<T.Mesh scale={1.005} renderOrder={1}>
 			<T.SphereGeometry args={[1, 128, 128]} />
 			<T.MeshStandardMaterial
 				map={cloud_texture}
