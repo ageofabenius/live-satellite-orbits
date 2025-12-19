@@ -17,6 +17,10 @@ async function fetch_tles_from_celestrak_netlify_mirror(): Promise<string> {
     return str
 }
 
+
+// TLEs are cached using browser localStorage, this proved significantly faster
+// to load compared to response caching with either compressed or uncompressed
+// data
 const LOCAL_STORAGE_KEY = "tles"
 const LOCAL_STORAGE_AGE_KEY = "tles_cached_at"
 const MAXIMUM_ALLOWABLE_CACHE_AGE_MS = 6 * 3600 * 1000
