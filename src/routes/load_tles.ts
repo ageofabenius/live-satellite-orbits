@@ -1,9 +1,6 @@
 import { propagate, twoline2satrec, type EciVec3, type Kilometer, type KilometerPerSecond, type PositionAndVelocity, type SatRec } from 'satellite.js';
 import { Vector3 } from 'three';
 
-const CELESTRAK_ACTIVE_TLES_URL = "https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle"
-
-
 export const SIDEREAL_DAY_SECONDS = 86164.0905
 export const EARTH_MU = 398600.4418; // km^3 / s^2
 export const EARTH_RADIUS_KM = 6378.137;
@@ -12,15 +9,13 @@ export const EARTH_RADIUS_KM = 6378.137;
 async function fetch_tles_from_celestrak_netlify_mirror(): Promise<string> {
     console.log("Fetching TLEs from Netlify mirror of Celestrak...")
     console.time("Fetched TLEs from Netlify mirror of Celestrak...")
-    const res = await fetch("tles")
-    const str = (await res.text())
+    let res = await fetch("/.netlify/functions/fetch_mirrored_tles")
+    const str = await res.text()
 
     console.timeEnd("Fetched TLEs from Celestrak...")
 
     return str
 }
-
-
 
 const LOCAL_STORAGE_KEY = "tles"
 const LOCAL_STORAGE_AGE_KEY = "tles_cached_at"
@@ -56,6 +51,7 @@ async function fetch_tles(): Promise<string> {
     if (cached_tles) {
         return cached_tles
     }
+
     const celestrak_tles = await fetch_tles_from_celestrak_netlify_mirror()
     cache_tles(celestrak_tles)
     return celestrak_tles

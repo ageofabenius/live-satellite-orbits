@@ -1,5 +1,5 @@
 import { getStore } from "@netlify/blobs";
-import type { Config, Context } from "@netlify/functions";
+import type { Config } from "@netlify/functions";
 
 const CELESTRAK_ACTIVE_TLES_URL = "https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle"
 
@@ -7,7 +7,7 @@ export const config: Config = {
     schedule: "@hourly"
 }
 
-export default async function mirror_celestrak(req: Request, context: Context) {
+export default async function mirror_celestrak() {
     const tles_str = await fetch_tles_from_celestrak()
     const size_raw = tles_str.length.toLocaleString('en-US')
     console.log(`Fetched TLEs from Celestrak, ${size_raw}B`)
