@@ -7,7 +7,7 @@ export default async function fetch_mirrored_tles(): Promise<Response> {
     })
 
     if (!blob) {
-        return new Response('Not found', { status: 404 })
+        return new Response('Unable to load TLEs from Blob', { status: 503 })
     }
 
     const mirrored_at = blob.metadata?.mirrored_at;

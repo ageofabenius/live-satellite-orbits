@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { T } from '@threlte/core';
+	import { T, useTask } from '@threlte/core';
 	import {
 		TextureLoader,
 		Mesh,
@@ -14,8 +14,23 @@
 	import { onMount } from 'svelte';
 	interactivity();
 
-	let { earth_mesh = $bindable(), simulated_time }: { earth_mesh: Mesh; simulated_time: Date } =
-		$props();
+	let {
+		earth_mesh = $bindable(),
+		simulated_time,
+		loading_started,
+		loading_complete,
+		loading_message
+	}: {
+		earth_mesh: Mesh;
+		simulated_time: Date;
+		loading_started: (name: string) => void;
+		loading_complete: (name: string) => void;
+		loading_message: (name: string) => void;
+	} = $props();
+
+	onMount(() => {
+		loading_started('Earth');
+	});
 
 	//// Earth mesh and textures ////
 	const EARTH_RADIUS_KM = 6371;
@@ -31,16 +46,11 @@
 
 	let sun_direction_world: Vector3 = $state(new Vector3());
 
+	let is_loading = true;
 	onMount(async () => {
 		const loader = new TextureLoader();
 
-		// [day_texture, night_texture, cloud_texture, normal_map, specular_map] = await Promise.all([
-		// 	loader.loadAsync('/textures/2k_earth_daymap.jpg'),
-		// 	loader.loadAsync('/textures/2k_earth_nightmap.jpg'),
-		// 	loader.loadAsync('/textures/2k_earth_clouds.jpg'),
-		// 	loader.loadAsync('/textures/2k_earth_normal_map.png'),
-		// 	loader.loadAsync('/textures/2k_earth_specular_map.png')
-		// ]);
+		loading_message('loading Earth textures');
 
 		[day_texture, night_texture, cloud_texture, normal_map, specular_map] = await Promise.all([
 			loader.loadAsync('/textures/8k_earth_daymap.avif'),
@@ -50,12 +60,16 @@
 			loader.loadAsync('/textures/8k_earth_specular_map.avif')
 		]);
 
+		loading_message('initializing Earth geometry');
+
 		day_texture.colorSpace = SRGBColorSpace;
 		night_texture.colorSpace = SRGBColorSpace;
 		cloud_texture.colorSpace = LinearSRGBColorSpace;
 
 		normal_map.colorSpace = LinearSRGBColorSpace;
 		specular_map.colorSpace = LinearSRGBColorSpace;
+
+		loading_message('compiling Earth shaders');
 
 		earth_material!.onBeforeCompile = (shader) => {
 			shader.uniforms.sunDirectionWorld = { value: sun_direction_world };
@@ -104,6 +118,15 @@
 			);
 
 			earth_material_shader = shader;
+		};
+
+		earth_mesh.onAfterRender = () => {
+			if (is_loading) {
+				requestAnimationFrame(() => {
+					loading_complete('Earth');
+					is_loading = false;
+				});
+			}
 		};
 	});
 
