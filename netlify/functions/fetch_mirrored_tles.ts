@@ -16,10 +16,8 @@ export default async function fetch_mirrored_tles(): Promise<Response> {
 
     return new Response(bytes, {
         headers: {
-            'content-type': 'application/gzip',
+            'content-type': 'text/plain; charset=utf-8',
             'content-encoding': 'gzip',
-            // 'cache-control': 'public, max-age=3600, s-maxage=3600',
-            'content-disposition': 'inline; filename="active.txt.gz"',
 
             ...(mirrored_at ? { 'etag': `"${mirrored_at}"` } : {})
         }
