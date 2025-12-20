@@ -30,7 +30,12 @@ function cache_tles(tles: string) {
     localStorage.setItem(LOCAL_STORAGE_AGE_KEY, new Date().toISOString())
 }
 
-function load_tles_from_cache(): string | null {
+function expunge_cached_tles() {
+    localStorage.removeItem(LOCAL_STORAGE_KEY)
+    localStorage.removeItem(LOCAL_STORAGE_AGE_KEY)
+}
+
+function load_tles_from_cache(): [string, SatRec, OrbitalRegime][] | null {
     const cached_time_string = localStorage.getItem(LOCAL_STORAGE_AGE_KEY)
     if (!cached_time_string) {
         return null
@@ -39,50 +44,36 @@ function load_tles_from_cache(): string | null {
     const now = new Date()
     const cache_age_ms = now.getTime() - cached_time.getTime()
     if (cache_age_ms > MAXIMUM_ALLOWABLE_CACHE_AGE_MS) {
-        // Expunge cache
-        localStorage.removeItem(LOCAL_STORAGE_KEY)
-        localStorage.removeItem(LOCAL_STORAGE_AGE_KEY)
-
+        expunge_cached_tles()
         return null
     }
 
-    return localStorage.getItem(LOCAL_STORAGE_KEY)
-}
+    let tles_str = localStorage.getItem(LOCAL_STORAGE_KEY)
 
-async function fetch_tles(): Promise<string> {
-    // First, try loading from localStorage cache
-    console.time("Loaded cached TLEs from localStorage")
-    const cached_tles = load_tles_from_cache()
-    if (cached_tles) {
-        console.timeEnd("Loaded cached TLEs from localStorage")
-        return cached_tles
+    if (tles_str === null) {
+        expunge_cached_tles()
+        return null
     }
 
-    console.time("Fetched TLEs from Celestrak mirror")
-    const celestrak_tles = await fetch_tles_from_celestrak_netlify_mirror()
-    console.timeEnd("Fetched TLEs from Celestrak mirror")
-
-    console.time(`Caching TLEs for ${MAXIMUM_ALLOWABLE_CACHE_AGE_MS / 1000} seconds`)
-    cache_tles(celestrak_tles)
-    console.timeEnd(`Caching TLEs for ${MAXIMUM_ALLOWABLE_CACHE_AGE_MS / 1000} seconds`)
-
-    return celestrak_tles
+    try {
+        let tles = initialize_tles(tles_str)
+        return tles
+    } catch (error) {
+        console.error("Error initializing TLEs from cache", error)
+        expunge_cached_tles()
+        return null
+    }
 }
 
 
-export async function load_tles(): Promise<[string, SatRec, OrbitalRegime][]> {
-    console.time("Loaded TLEs")
-
-    let tles_str = await fetch_tles()
-
-    console.time("Parsed TLEs")
+function initialize_tles(tles_str: string): [string, SatRec, OrbitalRegime][] {
+    console.time("Initialized TLEs")
     const lines = tles_str
         // Trim any trailing newlines
         .trim()
         // Split on newlines
-        .split("\n"); console.timeEnd("Parsed TLEs")
+        .split("\n");
 
-    console.time("Initialized TLEs")
     let tles: [string, SatRec, OrbitalRegime][] = []
     for (let i = 0; i < lines!.length; i += 3) {
         const line_0 = lines![i]
@@ -96,10 +87,44 @@ export async function load_tles(): Promise<[string, SatRec, OrbitalRegime][]> {
         tles.push([line_0, satrec, orbit])
     }
     console.timeEnd("Initialized TLEs")
-    console.timeEnd("Loaded TLEs")
-    console.log(`Ingested ${tles.length} satellite TLEs`)
 
     return tles
+}
+
+export async function load_tles(): Promise<[string, SatRec, OrbitalRegime][]> {
+    console.time("Loaded TLEs")
+
+    // First, try loading from localStorage cache
+    console.time("Loaded cached TLEs from localStorage")
+    const cached_tles = load_tles_from_cache()
+    if (cached_tles) {
+        console.timeEnd("Loaded cached TLEs from localStorage")
+        return cached_tles
+    }
+
+    console.time("Fetched TLEs from Celestrak mirror")
+    let tles_str = await fetch_tles_from_celestrak_netlify_mirror()
+    console.timeEnd("Fetched TLEs from Celestrak mirror")
+
+    try {
+        console.time("Initialized TLEs")
+        let tles = initialize_tles(tles_str)
+        console.timeEnd("Initialized TLEs")
+
+        console.time(`Caching TLEs for ${MAXIMUM_ALLOWABLE_CACHE_AGE_MS / 1000} seconds`)
+        cache_tles(tles_str)
+        console.timeEnd(`Caching TLEs for ${MAXIMUM_ALLOWABLE_CACHE_AGE_MS / 1000} seconds`)
+
+        console.timeEnd("Loaded TLEs")
+        console.log(`Ingested ${tles.length} satellite TLEs`)
+
+        return tles
+    } catch (error) {
+        console.error("Error initializing TLEs from Celestrak mirror", error)
+        return []
+    }
+
+
 }
 
 export enum OrbitalRegime {
