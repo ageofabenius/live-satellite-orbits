@@ -105,26 +105,27 @@ export async function load_tles(): Promise<[string, SatRec, OrbitalRegime][]> {
     console.time("Fetched TLEs from Celestrak mirror")
     let tles_str = await fetch_tles_from_celestrak_netlify_mirror()
     console.timeEnd("Fetched TLEs from Celestrak mirror")
+    console.log(`Fetched TLEs from Celestrak Mirror: ${tles_str.length} Bytes`)
 
+    let tles;
     try {
         console.time("Initialized TLEs")
-        let tles = initialize_tles(tles_str)
+        tles = initialize_tles(tles_str)
         console.timeEnd("Initialized TLEs")
 
-        console.time(`Caching TLEs for ${MAXIMUM_ALLOWABLE_CACHE_AGE_MS / 1000} seconds`)
-        cache_tles(tles_str)
-        console.timeEnd(`Caching TLEs for ${MAXIMUM_ALLOWABLE_CACHE_AGE_MS / 1000} seconds`)
-
-        console.timeEnd("Loaded TLEs")
-        console.log(`Ingested ${tles.length} satellite TLEs`)
-
-        return tles
     } catch (error) {
         console.error("Error initializing TLEs from Celestrak mirror", error)
         return []
     }
 
+    console.time(`Caching TLEs for ${MAXIMUM_ALLOWABLE_CACHE_AGE_MS / 1000} seconds`)
+    cache_tles(tles_str)
+    console.timeEnd(`Caching TLEs for ${MAXIMUM_ALLOWABLE_CACHE_AGE_MS / 1000} seconds`)
 
+    console.timeEnd("Loaded TLEs")
+    console.log(`Ingested ${tles.length} satellite TLEs`)
+
+    return tles
 }
 
 export enum OrbitalRegime {
