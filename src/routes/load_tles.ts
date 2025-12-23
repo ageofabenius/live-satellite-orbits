@@ -23,7 +23,7 @@ async function fetch_tles_from_celestrak_netlify_mirror(): Promise<string> {
 // data
 const LOCAL_STORAGE_KEY = "tles"
 const LOCAL_STORAGE_AGE_KEY = "tles_cached_at"
-const MAXIMUM_ALLOWABLE_CACHE_AGE_MS = 6 * 3600 * 1000
+const MAXIMUM_ALLOWABLE_CACHE_AGE_MS = 1 * 3600 * 1000
 
 function cache_tles(tles: string) {
     localStorage.setItem(LOCAL_STORAGE_KEY, tles)
