@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { TICK_RATE_SECONDS } from './sim_config';
+	import { TICK_RATE_SECONDS } from '../../config/simulation.config';
 
 	type InfoSection = 'About' | 'Data' | 'Methodology' | 'What is this?' | null;
 	let open_section: InfoSection = null;

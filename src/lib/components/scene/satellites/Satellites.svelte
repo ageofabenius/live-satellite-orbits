@@ -1,15 +1,5 @@
 <script lang="ts">
-	// TO-DO: Validate that satellite points mesh is correctly oriented
-
 	import { onMount } from 'svelte';
-	import {
-		EARTH_MU,
-		eci_to_three,
-		load_tles,
-		OrbitalRegime,
-		propagate_one_orbit,
-		propagate_tles_to_target_time
-	} from './load_tles';
 	import type { PositionAndVelocity, SatRec } from 'satellite.js';
 	import { T, useTask, useThrelte } from '@threlte/core';
 	import {
@@ -40,7 +30,15 @@
 		LineMaterial
 	});
 
-	import * as SceneColors from './scene_colors.ts';
+	import * as SceneColors from '../../../../../config/colors.config';
+	import { EARTH_MU, OrbitalRegime } from '$lib/satellite_orbits/orbital_regime';
+	import { load_tles } from '$lib/satellite_orbits/load_tles';
+	import {
+		propagate_one_orbit,
+		propagate_tles_to_target_time
+	} from '$lib/satellite_orbits/propagate_tles';
+	import { eci_to_three } from '$lib/satellite_orbits/coordinate_transforms';
+	import { format_duration } from '$lib/time';
 
 	const SATELLITE_BASE_SIZE = 5;
 	const SATELLITE_HIGHLIGHTED_SIZE = 20;
@@ -493,29 +491,6 @@
 			eccentricity: `${eccentricity.toFixed(6)}`,
 			inclination_deg: `${inclination_deg.toFixed(1)}°`
 		};
-	}
-
-	function format_duration(duration_seconds: number): string {
-		const days = Math.floor(duration_seconds / 86_400);
-		let remainder_seconds = duration_seconds % 86_400;
-
-		const hours = Math.floor(remainder_seconds / 3600);
-		remainder_seconds = remainder_seconds % 3600;
-
-		const minutes = Math.floor(remainder_seconds / 60);
-		remainder_seconds = remainder_seconds % 60;
-
-		const seconds = Math.floor(remainder_seconds);
-
-		let s = [];
-		if (days >= 1) {
-			s.push(`${days}d`);
-		}
-		s.push(`${hours}h`);
-		s.push(`${minutes}m`);
-		s.push(`${seconds}s`);
-
-		return s.join(' ');
 	}
 
 	// Register to OrbitControls zoom
