@@ -1,5 +1,4 @@
 import { eci_to_three } from "$lib/satellite_orbits/coordinate_transforms";
-import { load_tles } from "$lib/satellite_orbits/load_tles";
 import { EARTH_MU, type OrbitalRegime } from "$lib/satellite_orbits/orbital_regime";
 import { propagate_one_orbit, propagate_tles_to_target_time } from "$lib/satellite_orbits/propagate_tles";
 import { format_duration } from "$lib/time";
@@ -8,7 +7,7 @@ import { BufferAttribute, BufferGeometry, Vector3, WebGLRenderer } from "three";
 import { Line2 } from 'three/addons/lines/Line2.js';
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
-import { extend, useThrelte } from '@threlte/core';
+import { extend } from '@threlte/core';
 extend({
     Line2,
     LineGeometry,

@@ -1,21 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { T, useTask, useThrelte } from '@threlte/core';
-	import {
-		ShaderMaterial,
-		AdditiveBlending,
-		Mesh,
-		Points,
-		Vector2,
-		Vector3,
-		BufferGeometry
-	} from 'three';
+	import { ShaderMaterial, AdditiveBlending } from 'three';
 	import vertex_shader from '../satellite.vert?raw';
 	import fragment_shader from '../satellite.frag?raw';
 
-	import { OrbitControls as ThreeOrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-
-	import { interactivity, HTML } from '@threlte/extras';
+	import { HTML } from '@threlte/extras';
 
 	import { Line2 } from 'three/addons/lines/Line2.js';
 	import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
@@ -28,7 +18,6 @@
 	});
 
 	import * as SceneColors from '../../../../../../config/colors.config';
-	import { propagate_one_orbit } from '$lib/satellite_orbits/propagate_tles';
 	import { OrbitalRegime } from '$lib/satellite_orbits/orbital_regime';
 	import { SatellitesDetailsComp } from './satellite_details.svelte';
 	import type { SatRec } from 'satellite.js';
