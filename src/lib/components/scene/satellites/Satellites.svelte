@@ -379,6 +379,13 @@
 	{/key}
 {/if}
 
+{#if selected_satellite_index}
+	{#key selected_satellite_index}
+		{@const tle = ctx.tles[selected_satellite_index]}
+		<SatelliteDetails {tle} {simulated_time} {tick_rate_seconds} />
+	{/key}
+{/if}
+
 <!-- {#if hovered_satellite_tooltip}
 	<HTML
 		position={[
