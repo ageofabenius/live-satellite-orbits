@@ -1,11 +1,10 @@
 <script lang="ts">
 	import { Canvas } from '@threlte/core';
-	import Scene from './Scene.svelte';
-	import { SCENE_BACKGROUND } from './scene_colors';
+	import Scene from '$lib/components/scene/Scene.svelte';
+	import { SCENE_BACKGROUND } from '../../config/colors.config';
 	import { flip } from 'svelte/animate';
 	import { fade, fly } from 'svelte/transition';
 	import InfoOverlay from './InfoOverlay.svelte';
-	import SceneUIOverlay from './SceneUIOverlay.svelte';
 
 	let is_loading = $state(true);
 	let loading_components: Record<string, boolean> = $state({});
@@ -70,10 +69,6 @@
 	<div class="absolute size-full pointer-events-none z-11">
 		<InfoOverlay />
 	</div>
-
-	<!-- <div class="absolute size-full pointer-events-none z-9">
-		<SceneUIOverlay />
-	</div> -->
 
 	<!-- Loading screen -->
 	<div

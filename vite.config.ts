@@ -9,7 +9,8 @@ export default defineConfig({
 		fs: {
 			allow: [
 				path.resolve(process.cwd(), 'test/test_data'),
-				path.resolve(process.cwd(), 'static/textures')
+				path.resolve(process.cwd(), 'static/textures'),
+				path.resolve(process.cwd(), 'config')
 			]
 		},
 		allowedHosts: [

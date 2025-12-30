@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { T, useTask } from '@threlte/core';
 	import { OrbitControls } from '@threlte/extras';
-	import Earth from './Earth.svelte';
-	import Satellites from './Satellites.svelte';
+	import Earth from './earth/Earth.svelte';
+	import Satellites from './satellites/Satellites.svelte';
 	import { Mesh, PerspectiveCamera, type DirectionalLight, type Group } from 'three';
 	import { OrbitControls as ThreeOrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 	import { onMount, tick } from 'svelte';
-	import { TICK_RATE_SECONDS } from './sim_config';
+	import { TICK_RATE_SECONDS } from '../../../../config/simulation.config';
 
 	let {
 		loading_started,
