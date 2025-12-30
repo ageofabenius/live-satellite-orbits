@@ -69,8 +69,6 @@ export class SatellitesComp {
     set_tick_rate(tick_rate_seconds: number) {
         console.log(`Setting tick rate to ${tick_rate_seconds}`);
         this.tick_rate_seconds = tick_rate_seconds
-
-        // ....
     }
 
     tick(simulated_time: Date) {

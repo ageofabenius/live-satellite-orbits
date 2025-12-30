@@ -23,6 +23,7 @@
 	import { propagate_one_orbit } from '$lib/satellite_orbits/propagate_tles';
 	import { SatellitesComp, type SatelliteTooltip } from './satellites.svelte';
 	import { OrbitalRegime } from '$lib/satellite_orbits/orbital_regime';
+	import SatelliteDetails from '../SatelliteDetails/SatelliteDetails.svelte';
 
 	const SATELLITE_BASE_SIZE = 5;
 	const SATELLITE_HIGHLIGHTED_SIZE = 20;
@@ -96,30 +97,30 @@
 		blending: AdditiveBlending
 	});
 
-	let orbit_line: Line2 | null = $state(null);
-	let orbit_line_material: LineMaterial | null = $state(null);
+	// let orbit_line: Line2 | null = $state(null);
+	// let orbit_line_material: LineMaterial | null = $state(null);
 
-	function update_line_resolution() {
-		if (!orbit_line_material || !renderer) return;
+	// function update_line_resolution() {
+	// 	if (!orbit_line_material || !renderer) return;
 
-		const canvas = renderer.domElement;
+	// 	const canvas = renderer.domElement;
 
-		orbit_line_material.resolution.set(canvas.clientWidth, canvas.clientHeight);
-	}
+	// 	orbit_line_material.resolution.set(canvas.clientWidth, canvas.clientHeight);
+	// }
 
-	onMount(() => {
-		update_line_resolution();
+	// onMount(() => {
+	// 	update_line_resolution();
 
-		window.addEventListener('resize', update_line_resolution);
-		return () => window.removeEventListener('resize', update_line_resolution);
-	});
+	// 	window.addEventListener('resize', update_line_resolution);
+	// 	return () => window.removeEventListener('resize', update_line_resolution);
+	// });
 
 	useTask((delta) => {
 		ctx.interpolate_positions(delta);
 	});
 
 	// Declared desired states
-	let hovered_satellite_index: number | null = null;
+	let hovered_satellite_index: number | null = $state(null);
 	let selected_satellite_index: number | null = $state(null);
 
 	// Tracked states used to unhighlight previously highlighted points
@@ -127,58 +128,56 @@
 	let last_selected_satellite_index: number | null = null;
 
 	function handle_highlight_and_orbit_display() {
-		// Handle highlighting for both hovered and selected points
-		if (selected_satellite_index === null && last_selected_satellite_index !== null) {
-			// Handle unhighligting selected point
-			unhighlight_point(last_selected_satellite_index);
-			last_selected_satellite_index = null;
-			selected_satellite_tooltip = null;
-		} else if (selected_satellite_index !== null) {
-			// First unhighlight previous one if needed
-			if (last_selected_satellite_index) {
-				unhighlight_point(last_selected_satellite_index);
-				last_selected_satellite_index = null;
-				selected_satellite_tooltip = null;
-			}
-			// Then highlight
-			highlight_point(selected_satellite_index);
-			last_selected_satellite_index = selected_satellite_index;
-			selected_satellite_tooltip = ctx.satellite_tooltip_for_index(selected_satellite_index);
-		}
-
-		if (hovered_satellite_index === null && last_hovered_satellite_index !== null) {
-			if (last_hovered_satellite_index === selected_satellite_index) {
-				// Do nothing, this occurs when a satellite is first selected
-				// and the mouse then leaves
-				last_hovered_satellite_index = null;
-				hovered_satellite_tooltip = null;
-			} else {
-				// Handle highlighting hovered point
-				unhighlight_point(last_hovered_satellite_index);
-				last_hovered_satellite_index = null;
-				hovered_satellite_tooltip = null;
-			}
-		} else if (hovered_satellite_index !== null) {
-			// First unhighlight previous one if needed
-			if (last_hovered_satellite_index) {
-				unhighlight_point(last_hovered_satellite_index);
-				last_hovered_satellite_index = null;
-				hovered_satellite_tooltip = null;
-			}
-			// Then highlight
-			highlight_point(hovered_satellite_index);
-			last_hovered_satellite_index = hovered_satellite_index;
-			hovered_satellite_tooltip = ctx.satellite_tooltip_for_index(hovered_satellite_index);
-		}
-
-		// Handle displaying orbit of selected, then hovered if no selected
-		if (selected_satellite_index !== null) {
-			show_orbit(selected_satellite_index);
-		} else if (hovered_satellite_index !== null) {
-			show_orbit(hovered_satellite_index);
-		} else {
-			hide_orbit();
-		}
+		// // Handle highlighting for both hovered and selected points
+		// if (selected_satellite_index === null && last_selected_satellite_index !== null) {
+		// 	// Handle unhighligting selected point
+		// 	unhighlight_point(last_selected_satellite_index);
+		// 	last_selected_satellite_index = null;
+		// 	selected_satellite_tooltip = null;
+		// } else if (selected_satellite_index !== null) {
+		// 	// First unhighlight previous one if needed
+		// 	if (last_selected_satellite_index) {
+		// 		unhighlight_point(last_selected_satellite_index);
+		// 		last_selected_satellite_index = null;
+		// 		selected_satellite_tooltip = null;
+		// 	}
+		// 	// Then highlight
+		// 	highlight_point(selected_satellite_index);
+		// 	last_selected_satellite_index = selected_satellite_index;
+		// 	selected_satellite_tooltip = ctx.satellite_tooltip_for_index(selected_satellite_index);
+		// }
+		// if (hovered_satellite_index === null && last_hovered_satellite_index !== null) {
+		// 	if (last_hovered_satellite_index === selected_satellite_index) {
+		// 		// Do nothing, this occurs when a satellite is first selected
+		// 		// and the mouse then leaves
+		// 		last_hovered_satellite_index = null;
+		// 		hovered_satellite_tooltip = null;
+		// 	} else {
+		// 		// Handle highlighting hovered point
+		// 		unhighlight_point(last_hovered_satellite_index);
+		// 		last_hovered_satellite_index = null;
+		// 		hovered_satellite_tooltip = null;
+		// 	}
+		// } else if (hovered_satellite_index !== null) {
+		// 	// First unhighlight previous one if needed
+		// 	if (last_hovered_satellite_index) {
+		// 		unhighlight_point(last_hovered_satellite_index);
+		// 		last_hovered_satellite_index = null;
+		// 		hovered_satellite_tooltip = null;
+		// 	}
+		// 	// Then highlight
+		// 	highlight_point(hovered_satellite_index);
+		// 	last_hovered_satellite_index = hovered_satellite_index;
+		// 	hovered_satellite_tooltip = ctx.satellite_tooltip_for_index(hovered_satellite_index);
+		// }
+		// // Handle displaying orbit of selected, then hovered if no selected
+		// if (selected_satellite_index !== null) {
+		// 	show_orbit(selected_satellite_index);
+		// } else if (hovered_satellite_index !== null) {
+		// 	show_orbit(hovered_satellite_index);
+		// } else {
+		// 	hide_orbit();
+		// }
 	}
 
 	function highlight_point(index: number) {
@@ -245,16 +244,11 @@
 	function on_canvas_pointer_move() {
 		const hovered_satellite = raycast_mouse_to_satellite_points_index();
 
-		// console.log(`on_canvas_pointer_move intersecting with ${intersections.length} objects`);
-
 		if (!hovered_satellite) {
 			if (hovered_satellite_index === null) {
-				// This occurs when the mouse moves while still hovering over the
-				// same point
 				return;
 			}
 			hovered_satellite_index = null;
-			handle_highlight_and_orbit_display();
 		} else {
 			if (hovered_satellite_index === hovered_satellite) {
 				// This occurs when the mouse moves while still hovering over the
@@ -263,7 +257,6 @@
 			}
 
 			hovered_satellite_index = hovered_satellite;
-			handle_highlight_and_orbit_display();
 		}
 	}
 
@@ -327,12 +320,8 @@
 
 		const clicked_satellite = raycast_mouse_to_satellite_points_index();
 
-		// console.log(`on_canvas_pointer_move intersecting with ${intersections.length} objects`);
-
 		if (!clicked_satellite) {
 			if (selected_satellite_index === null) {
-				// This occurs when the mouse moves while still hovering over the
-				// same point
 				return;
 			}
 			selected_satellite_index = null;
@@ -345,7 +334,6 @@
 
 			selected_satellite_index = clicked_satellite;
 		}
-		handle_highlight_and_orbit_display();
 	}
 
 	// Reactive state for satellite tooltip display
@@ -384,18 +372,14 @@
 
 <T.Points bind:ref={points_mesh} geometry={ctx.satellites_geometry} material={shader_material} />
 
-<T.Line2 bind:ref={orbit_line}>
-	<T.LineGeometry attach="geometry" />
-	<T.LineMaterial
-		bind:ref={orbit_line_material}
-		attach="material"
-		linewidth={2}
-		transparent
-		opacity={0.7}
-	/>
-</T.Line2>
+{#if hovered_satellite_index}
+	{#key hovered_satellite_index}
+		{@const tle = ctx.tles[hovered_satellite_index]}
+		<SatelliteDetails {tle} {simulated_time} {tick_rate_seconds} />
+	{/key}
+{/if}
 
-{#if hovered_satellite_tooltip}
+<!-- {#if hovered_satellite_tooltip}
 	<HTML
 		position={[
 			hovered_satellite_tooltip.position.x,
@@ -448,9 +432,9 @@
 			</div>
 		</div>
 	</HTML>
-{/if}
+{/if} -->
 
-{#if selected_satellite_tooltip}
+<!-- {#if selected_satellite_tooltip}
 	<HTML
 		position={[
 			selected_satellite_tooltip.position.x,
@@ -503,4 +487,4 @@
 			</div>
 		</div>
 	</HTML>
-{/if}
+{/if} -->
