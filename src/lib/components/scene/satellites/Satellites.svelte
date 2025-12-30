@@ -100,7 +100,7 @@
 
 	// Declared desired states
 	let hovered_satellite_index: number | null = $state(null);
-	let selected_satellite_index: number | null = $state(null);
+	let selected_satellite_indexes: number[] = $state([]);
 
 	// Raycasting to highlight satellites on mouseover
 	// Get the renderer and camera from Threlte
@@ -131,7 +131,7 @@
 
 	function on_canvas_escape_up(e: any) {
 		if (e.key === 'Escape') {
-			selected_satellite_index = null;
+			selected_satellite_indexes = [];
 		}
 	}
 
@@ -214,19 +214,8 @@
 
 		const clicked_satellite = raycast_mouse_to_satellite_points_index();
 
-		if (!clicked_satellite) {
-			if (selected_satellite_index === null) {
-				return;
-			}
-			selected_satellite_index = null;
-		} else {
-			if (selected_satellite_index === clicked_satellite) {
-				// This occurs when the mouse moves while still hovering over the
-				// same point
-				return;
-			}
-
-			selected_satellite_index = clicked_satellite;
+		if (clicked_satellite && !selected_satellite_indexes.includes(clicked_satellite)) {
+			selected_satellite_indexes = [...selected_satellite_indexes, clicked_satellite];
 		}
 	}
 
@@ -269,9 +258,7 @@
 	{/key}
 {/if}
 
-{#if selected_satellite_index}
-	{#key selected_satellite_index}
-		{@const tle = ctx.tles[selected_satellite_index]}
-		<SatelliteDetails {tle} {simulated_time} {tick_rate_seconds} />
-	{/key}
-{/if}
+{#each selected_satellite_indexes as index (index)}
+	{@const tle = ctx.tles[index]}
+	<SatelliteDetails {tle} {simulated_time} {tick_rate_seconds} />
+{/each}
