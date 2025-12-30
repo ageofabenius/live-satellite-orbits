@@ -10,8 +10,8 @@
 		Vector3,
 		BufferGeometry
 	} from 'three';
-	import vertex_shader from '../satellites/satellite.vert?raw';
-	import fragment_shader from '../satellites/satellite.frag?raw';
+	import vertex_shader from '../satellite.vert?raw';
+	import fragment_shader from '../satellite.frag?raw';
 
 	import { OrbitControls as ThreeOrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
@@ -27,7 +27,7 @@
 		LineMaterial
 	});
 
-	import * as SceneColors from '../../../../../config/colors.config';
+	import * as SceneColors from '../../../../../../config/colors.config';
 	import { propagate_one_orbit } from '$lib/satellite_orbits/propagate_tles';
 	import { OrbitalRegime } from '$lib/satellite_orbits/orbital_regime';
 	import { SatellitesDetailsComp } from './satellite_details.svelte';
@@ -41,11 +41,13 @@
 	let {
 		tle,
 		simulated_time,
-		tick_rate_seconds
+		tick_rate_seconds,
+		show_tooltip = true
 	}: {
 		tle: [string, SatRec, OrbitalRegime];
 		simulated_time: Date;
 		tick_rate_seconds: number;
+		show_tooltip?: boolean;
 	} = $props();
 
 	const { renderer } = useThrelte();
@@ -61,7 +63,9 @@
 		// svelte-ignore state_referenced_locally
 		SATELLITE_HIGHLIGHTED_SIZE,
 		SceneColors.SATELLITE_POINTS,
-		BASE_TRANSPARENCY
+		BASE_TRANSPARENCY,
+		// svelte-ignore state_referenced_locally
+		show_tooltip
 	);
 
 	$effect(() => {
@@ -101,3 +105,54 @@
 		opacity={0.7}
 	/>
 </T.Line2>
+
+{#if ctx.tooltip}
+	<HTML
+		position={[ctx.tooltip.position.x, ctx.tooltip.position.y, ctx.tooltip.position.z]}
+		class="pointer-events-none"
+	>
+		<div
+			class="
+				rounded-lg
+				border {SceneColors.TOOLTIP_EDGE}
+				{SceneColors.TOOLTIP_FILL}
+				backdrop-blur-md
+				px-3 py-2
+				pointer-events-none
+			"
+		>
+			<div
+				class="
+					absolute
+					inset-0
+					rounded-xl
+					{SceneColors.TOOLTIP_GLOW}
+					blur-lg
+				"
+			></div>
+			<div class="flex flex-col gap-1 whitespace-nowrap">
+				<span class="text-sm font-semibold tracking-wide {SceneColors.TOOLTIP_HEADER_TEXT}">
+					{ctx.tooltip.name}
+				</span>
+
+				<div
+					class="text-xs {SceneColors.TOOLTIP_REGULAR_TEXT} grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5"
+				>
+					<span class="col-span-2">{OrbitalRegime[ctx.tooltip.orbital_regime]}</span>
+
+					<span class={SceneColors.TOOLTIP_MUTED_TEXT}>period</span>
+					<span class="text-right"> {ctx.tooltip.period}</span>
+
+					<span class={SceneColors.TOOLTIP_MUTED_TEXT}>semi-major axis</span>
+					<span class="text-right">{ctx.tooltip.semi_major_axis}</span>
+
+					<span class={SceneColors.TOOLTIP_MUTED_TEXT}>eccentricity</span>
+					<span class="text-right"> {ctx.tooltip.eccentricity}</span>
+
+					<span class={SceneColors.TOOLTIP_MUTED_TEXT}>inclination</span>
+					<span class="text-right"> {ctx.tooltip.inclination_deg}</span>
+				</div>
+			</div>
+		</div>
+	</HTML>
+{/if}

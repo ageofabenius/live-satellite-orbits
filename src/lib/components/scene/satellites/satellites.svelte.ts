@@ -169,31 +169,6 @@ export class SatellitesComp {
         this.satellites_geometry.computeBoundingSphere();
         this.satellites_geometry.computeBoundingBox();
     }
-
-    satellite_tooltip_for_index(satellite_index: number): SatelliteTooltip {
-        const satrec = this.tles[satellite_index][1];
-
-        const mean_motion_rad_per_sec = satrec.no / 60;
-        const mean_motion_rev_per_day = (satrec.no * 1440) / (2 * Math.PI);
-        const inclination_deg = (satrec.inclo * 180) / Math.PI;
-        const eccentricity = satrec.ecco;
-
-        const semi_major_axis = Math.cbrt(
-            EARTH_MU / (mean_motion_rad_per_sec * mean_motion_rad_per_sec)
-        );
-
-        const period_seconds = 86400 / mean_motion_rev_per_day;
-
-        return {
-            name: this.tles[satellite_index][0],
-            position: this.target_satellite_positions[satellite_index][1],
-            orbital_regime: this.tles[satellite_index][2],
-            period: format_duration(period_seconds),
-            semi_major_axis: `${semi_major_axis.toFixed(0)} km`,
-            eccentricity: `${eccentricity.toFixed(6)}`,
-            inclination_deg: `${inclination_deg.toFixed(1)}°`
-        };
-    }
 }
 
 
@@ -210,12 +185,3 @@ function propagate_to_time(
     });
 }
 
-export type SatelliteTooltip = {
-    position: Vector3;
-    name: string;
-    orbital_regime: OrbitalRegime;
-    period: string;
-    semi_major_axis: string;
-    eccentricity: string;
-    inclination_deg: string;
-};

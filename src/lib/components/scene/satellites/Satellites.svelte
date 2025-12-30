@@ -21,9 +21,9 @@
 
 	import * as SceneColors from '../../../../../config/colors.config';
 	import { propagate_one_orbit } from '$lib/satellite_orbits/propagate_tles';
-	import { SatellitesComp, type SatelliteTooltip } from './satellites.svelte';
+	import { SatellitesComp } from './satellites.svelte';
 	import { OrbitalRegime } from '$lib/satellite_orbits/orbital_regime';
-	import SatelliteDetails from '../SatelliteDetails/SatelliteDetails.svelte';
+	import SatelliteDetails from './SatelliteDetails/SatelliteDetails.svelte';
 
 	const SATELLITE_BASE_SIZE = 5;
 	const SATELLITE_HIGHLIGHTED_SIZE = 20;
@@ -192,20 +192,20 @@
 		invalidate();
 	}
 
-	function show_orbit(index: number) {
-		const orbit_positions = propagate_one_orbit(ctx.tles[index][1], simulated_time);
-		if (orbit_positions) {
-			orbit_line!.geometry.setPositions(orbit_positions.flatMap((p) => [p.x, p.y, p.z]));
-			orbit_line!.computeLineDistances();
-		}
-	}
+	// function show_orbit(index: number) {
+	// 	const orbit_positions = propagate_one_orbit(ctx.tles[index][1], simulated_time);
+	// 	if (orbit_positions) {
+	// 		orbit_line!.geometry.setPositions(orbit_positions.flatMap((p) => [p.x, p.y, p.z]));
+	// 		orbit_line!.computeLineDistances();
+	// 	}
+	// }
 
-	function hide_orbit() {
-		// geometry needs at least 1 point or it errors
-		orbit_line!.geometry.setPositions([0, 0, 0]);
-		orbit_line!.computeLineDistances();
-		invalidate();
-	}
+	// function hide_orbit() {
+	// 	// geometry needs at least 1 point or it errors
+	// 	orbit_line!.geometry.setPositions([0, 0, 0]);
+	// 	orbit_line!.computeLineDistances();
+	// 	invalidate();
+	// }
 
 	// Raycasting to highlight satellites on mouseover
 	// Get the renderer and camera from Threlte
@@ -337,8 +337,8 @@
 	}
 
 	// Reactive state for satellite tooltip display
-	let hovered_satellite_tooltip: SatelliteTooltip | null = $state(null);
-	let selected_satellite_tooltip: SatelliteTooltip | null = $state(null);
+	// let hovered_satellite_tooltip: SatelliteTooltip | null = $state(null);
+	// let selected_satellite_tooltip: SatelliteTooltip | null = $state(null);
 
 	// Register to OrbitControls zoom
 	onMount(() => {

@@ -20,6 +20,9 @@ export class SatellitesDetailsComp {
     simulated_time: Date
     tick_rate_seconds: number
 
+    show_tooltip: boolean = false
+    tooltip: SatelliteTooltip | null = $state(null);
+
     tle: [string, SatRec, OrbitalRegime]
 
     renderer: WebGLRenderer
@@ -53,7 +56,8 @@ export class SatellitesDetailsComp {
         initial_tick_rate_seconds: number,
         SATELLITE_HIGHLIGHTED_SIZE: number,
         SATELLITE_POINTS_COLOR: [number, number, number],
-        HIGHLIGHTED_TRANSPARENCY: number
+        HIGHLIGHTED_TRANSPARENCY: number,
+        show_tooltip: boolean
     ) {
         this.tle = tle
 
@@ -65,6 +69,8 @@ export class SatellitesDetailsComp {
         this.SATELLITE_HIGHLIGHTED_SIZE = SATELLITE_HIGHLIGHTED_SIZE
         this.SATELLITE_POINTS_COLOR = SATELLITE_POINTS_COLOR
         this.HIGHLIGHTED_TRANSPARENCY = HIGHLIGHTED_TRANSPARENCY
+
+        this.show_tooltip = show_tooltip
     }
 
     set_tick_rate(tick_rate_seconds: number) {
@@ -126,11 +132,14 @@ export class SatellitesDetailsComp {
 
         this.show_orbit()
 
+        if (this.show_tooltip) {
+            this.tooltip = this.satellite_tooltip();
+        }
+
         this.update_line_resolution();
 
         window.addEventListener('resize', this.update_line_resolution);
         return () => window.removeEventListener('resize', this.update_line_resolution);
-
     }
 
     propagate_target_position(
@@ -178,12 +187,36 @@ export class SatellitesDetailsComp {
     }
 
     show_orbit() {
-        console.warn("show orbit called")
         const orbit_positions = propagate_one_orbit(this.tle[1], this.simulated_time);
         if (orbit_positions) {
             this.orbit_line!.geometry.setPositions(orbit_positions.flatMap((p) => [p.x, p.y, p.z]));
             this.orbit_line!.computeLineDistances();
         }
+    }
+
+    satellite_tooltip(): SatelliteTooltip {
+        const satrec = this.tle[1];
+
+        const mean_motion_rad_per_sec = satrec.no / 60;
+        const mean_motion_rev_per_day = (satrec.no * 1440) / (2 * Math.PI);
+        const inclination_deg = (satrec.inclo * 180) / Math.PI;
+        const eccentricity = satrec.ecco;
+
+        const semi_major_axis = Math.cbrt(
+            EARTH_MU / (mean_motion_rad_per_sec * mean_motion_rad_per_sec)
+        );
+
+        const period_seconds = 86400 / mean_motion_rev_per_day;
+
+        return {
+            name: this.tle[0],
+            position: this.target_satellite_position,
+            orbital_regime: this.tle[2],
+            period: format_duration(period_seconds),
+            semi_major_axis: `${semi_major_axis.toFixed(0)} km`,
+            eccentricity: `${eccentricity.toFixed(6)}`,
+            inclination_deg: `${inclination_deg.toFixed(1)}°`
+        };
     }
 }
 
@@ -197,3 +230,13 @@ function propagate_to_time(
     const position = pos_and_vel ? eci_to_three(pos_and_vel.position) : new Vector3(0, 0, 0);
     return [name, position];
 }
+
+export type SatelliteTooltip = {
+    position: Vector3;
+    name: string;
+    orbital_regime: OrbitalRegime;
+    period: string;
+    semi_major_axis: string;
+    eccentricity: string;
+    inclination_deg: string;
+};
