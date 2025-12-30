@@ -1,18 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import type { PositionAndVelocity, SatRec } from 'satellite.js';
 	import { T, useTask, useThrelte } from '@threlte/core';
-	import {
-		BufferGeometry,
-		Vector3,
-		ShaderMaterial,
-		AdditiveBlending,
-		BufferAttribute,
-		Mesh,
-		type Intersection,
-		Points,
-		Vector2
-	} from 'three';
+	import { ShaderMaterial, AdditiveBlending, Mesh, Points, Vector2 } from 'three';
 	import vertex_shader from './satellite.vert?raw';
 	import fragment_shader from './satellite.frag?raw';
 
@@ -31,15 +20,9 @@
 	});
 
 	import * as SceneColors from '../../../../../config/colors.config';
-	import { EARTH_MU, OrbitalRegime } from '$lib/satellite_orbits/orbital_regime';
-	import { load_tles } from '$lib/satellite_orbits/load_tles';
-	import {
-		propagate_one_orbit,
-		propagate_tles_to_target_time
-	} from '$lib/satellite_orbits/propagate_tles';
-	import { eci_to_three } from '$lib/satellite_orbits/coordinate_transforms';
-	import { format_duration } from '$lib/time';
-	import { SatellitesComp } from './satellites.svelte';
+	import { propagate_one_orbit } from '$lib/satellite_orbits/propagate_tles';
+	import { SatellitesComp, type SatelliteTooltip } from './satellites.svelte';
+	import { OrbitalRegime } from '$lib/satellite_orbits/orbital_regime';
 
 	const SATELLITE_BASE_SIZE = 5;
 	const SATELLITE_HIGHLIGHTED_SIZE = 20;
@@ -65,10 +48,15 @@
 	} = $props();
 
 	let ctx = new SatellitesComp(
+		// svelte-ignore state_referenced_locally
 		simulated_time,
+		// svelte-ignore state_referenced_locally
 		tick_rate_seconds,
+		// svelte-ignore state_referenced_locally
 		loading_started,
+		// svelte-ignore state_referenced_locally
 		loading_complete,
+		// svelte-ignore state_referenced_locally
 		loading_message,
 		SATELLITE_BASE_SIZE,
 		SATELLITE_HIGHLIGHTED_SIZE,
@@ -155,7 +143,7 @@
 			// Then highlight
 			highlight_point(selected_satellite_index);
 			last_selected_satellite_index = selected_satellite_index;
-			selected_satellite_tooltip = satellite_tooptip(selected_satellite_index);
+			selected_satellite_tooltip = ctx.satellite_tooltip_for_index(selected_satellite_index);
 		}
 
 		if (hovered_satellite_index === null && last_hovered_satellite_index !== null) {
@@ -180,7 +168,7 @@
 			// Then highlight
 			highlight_point(hovered_satellite_index);
 			last_hovered_satellite_index = hovered_satellite_index;
-			hovered_satellite_tooltip = satellite_tooptip(hovered_satellite_index);
+			hovered_satellite_tooltip = ctx.satellite_tooltip_for_index(hovered_satellite_index);
 		}
 
 		// Handle displaying orbit of selected, then hovered if no selected
@@ -255,7 +243,7 @@
 	}
 
 	function on_canvas_pointer_move() {
-		const hovered_satellite = raycast_mouse_to_satellite();
+		const hovered_satellite = raycast_mouse_to_satellite_points_index();
 
 		// console.log(`on_canvas_pointer_move intersecting with ${intersections.length} objects`);
 
@@ -268,18 +256,18 @@
 			hovered_satellite_index = null;
 			handle_highlight_and_orbit_display();
 		} else {
-			if (hovered_satellite_index === hovered_satellite.index) {
+			if (hovered_satellite_index === hovered_satellite) {
 				// This occurs when the mouse moves while still hovering over the
 				// same point
 				return;
 			}
 
-			hovered_satellite_index = hovered_satellite.index!;
+			hovered_satellite_index = hovered_satellite;
 			handle_highlight_and_orbit_display();
 		}
 	}
 
-	function raycast_mouse_to_satellite(): Intersection | null {
+	function raycast_mouse_to_satellite_points_index(): number | null {
 		if (!raycaster.camera || !earth_mesh || !points_mesh) {
 			// Scene is not yet fully initialized
 			return null;
@@ -307,7 +295,7 @@
 
 			if (dist && dist < minDist) {
 				minDist = dist;
-				closest = inter;
+				closest = inter.index!;
 			}
 		}
 
@@ -337,7 +325,7 @@
 			return;
 		}
 
-		const clicked_satellite = raycast_mouse_to_satellite();
+		const clicked_satellite = raycast_mouse_to_satellite_points_index();
 
 		// console.log(`on_canvas_pointer_move intersecting with ${intersections.length} objects`);
 
@@ -349,54 +337,20 @@
 			}
 			selected_satellite_index = null;
 		} else {
-			if (selected_satellite_index === clicked_satellite.index) {
+			if (selected_satellite_index === clicked_satellite) {
 				// This occurs when the mouse moves while still hovering over the
 				// same point
 				return;
 			}
 
-			selected_satellite_index = clicked_satellite.index!;
+			selected_satellite_index = clicked_satellite;
 		}
 		handle_highlight_and_orbit_display();
 	}
 
 	// Reactive state for satellite tooltip display
-	type SatelliteTooltip = {
-		position: Vector3;
-		name: string;
-		orbital_regime: OrbitalRegime;
-		period: string;
-		semi_major_axis: string;
-		eccentricity: string;
-		inclination_deg: string;
-	};
 	let hovered_satellite_tooltip: SatelliteTooltip | null = $state(null);
 	let selected_satellite_tooltip: SatelliteTooltip | null = $state(null);
-
-	function satellite_tooptip(satellite_index: number): SatelliteTooltip {
-		const satrec = ctx.tles[satellite_index][1];
-
-		const mean_motion_rad_per_sec = satrec.no / 60;
-		const mean_motion_rev_per_day = (satrec.no * 1440) / (2 * Math.PI);
-		const inclination_deg = (satrec.inclo * 180) / Math.PI;
-		const eccentricity = satrec.ecco;
-
-		const semi_major_axis = Math.cbrt(
-			EARTH_MU / (mean_motion_rad_per_sec * mean_motion_rad_per_sec)
-		);
-
-		const period_seconds = 86400 / mean_motion_rev_per_day;
-
-		return {
-			name: ctx.tles[satellite_index][0],
-			position: ctx.target_satellite_positions[satellite_index][1],
-			orbital_regime: ctx.tles[satellite_index][2],
-			period: format_duration(period_seconds),
-			semi_major_axis: `${semi_major_axis.toFixed(0)} km`,
-			eccentricity: `${eccentricity.toFixed(6)}`,
-			inclination_deg: `${inclination_deg.toFixed(1)}°`
-		};
-	}
 
 	// Register to OrbitControls zoom
 	onMount(() => {
