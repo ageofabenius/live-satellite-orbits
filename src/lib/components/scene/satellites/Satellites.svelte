@@ -39,6 +39,7 @@
 	} from '$lib/satellite_orbits/propagate_tles';
 	import { eci_to_three } from '$lib/satellite_orbits/coordinate_transforms';
 	import { format_duration } from '$lib/time';
+	import { SatellitesComp } from './satellites.svelte';
 
 	const SATELLITE_BASE_SIZE = 5;
 	const SATELLITE_HIGHLIGHTED_SIZE = 20;
@@ -62,6 +63,9 @@
 		loading_complete: (name: string) => void;
 		loading_message: (name: string) => void;
 	} = $props();
+
+	let ctx = new SatellitesComp();
+	console.log('ctx', ctx);
 
 	onMount(() => {
 		loading_started('Satellites');
@@ -95,19 +99,19 @@
 		propagate_new_target_positions(tles, simulated_time);
 	});
 
-	let start_satellite_positions: [string, Vector3][] = [];
-	let target_satellite_positions: [string, Vector3][] = [];
-	let interpolated_elapsed_seconds = 0;
+	// let ctx.start_satellite_positions: [string, Vector3][] = [];
+	// let ctx.target_satellite_positions: [string, Vector3][] = [];
+	// let ctx.interpolated_elapsed_seconds = 0;
 
-	let satellites_geometry: BufferGeometry = $state(new BufferGeometry());
-	let satellites_position_attribute: BufferAttribute | null = null;
+	// let ctx.satellites_geometry: BufferGeometry = $state(new BufferGeometry());
+	// let ctx.satellites_position_attribute: BufferAttribute | null = null;
 
-	let point_sizes: Float32Array | null = null;
+	// let ctx.point_sizes: Float32Array | null = null;
 
-	let colors: Float32Array | null = null;
+	// let ctx.colors: Float32Array | null = null;
 
-	let transparencies: Float32Array | null = null;
-	let satellites_transparency_attribute: BufferAttribute | null = null;
+	// let ctx.transparencies: Float32Array | null = null;
+	// let ctx.satellites_transparency_attribute: BufferAttribute | null = null;
 
 	let orbit_line: Line2 | null = $state(null);
 	let orbit_line_material: LineMaterial | null = $state(null);
@@ -134,44 +138,44 @@
 
 		loading_message('initializing satellite geometry');
 		// Initialize size array and set base point sizes
-		point_sizes = new Float32Array(tles.length).fill(SATELLITE_BASE_SIZE);
-		satellites_geometry.setAttribute('size', new BufferAttribute(point_sizes, 1));
+		ctx.point_sizes = new Float32Array(tles.length).fill(SATELLITE_BASE_SIZE);
+		ctx.satellites_geometry.setAttribute('size', new BufferAttribute(ctx.point_sizes, 1));
 
-		// Initialize color array and set point colors
-		colors = new Float32Array(tles.length * 3).fill(1);
+		// Initialize color array and set point ctx.colors
+		ctx.colors = new Float32Array(tles.length * 3).fill(1);
 		const satellite_color = SceneColors.SATELLITE_POINTS;
 		tles.forEach(([_name, _satrec, _orbital_regime], i) => {
-			colors![i * 3] = satellite_color[0];
-			colors![i * 3 + 1] = satellite_color[1];
-			colors![i * 3 + 2] = satellite_color[2];
+			ctx.colors![i * 3] = satellite_color[0];
+			ctx.colors![i * 3 + 1] = satellite_color[1];
+			ctx.colors![i * 3 + 2] = satellite_color[2];
 		});
-		satellites_geometry.setAttribute('color', new BufferAttribute(colors, 3));
+		ctx.satellites_geometry.setAttribute('color', new BufferAttribute(ctx.colors, 3));
 
-		transparencies = new Float32Array(tles.length).fill(1);
-		satellites_transparency_attribute = satellites_geometry.getAttribute(
+		ctx.transparencies = new Float32Array(tles.length).fill(1);
+		ctx.satellites_transparency_attribute = ctx.satellites_geometry.getAttribute(
 			'transparency'
 		) as BufferAttribute;
-		satellites_geometry.setAttribute(
+		ctx.satellites_geometry.setAttribute(
 			'transparency',
-			new BufferAttribute(transparencies, BASE_TRANSPARENCY)
+			new BufferAttribute(ctx.transparencies, BASE_TRANSPARENCY)
 		);
 
 		// Initialize position array and set initial point positions
-		satellites_geometry.setAttribute(
+		ctx.satellites_geometry.setAttribute(
 			'position',
 			new BufferAttribute(new Float32Array(tles.length * 3), 3)
 		);
 
-		satellites_position_attribute = satellites_geometry.getAttribute('position') as BufferAttribute;
+		ctx.satellites_position_attribute = ctx.satellites_geometry.getAttribute('position') as BufferAttribute;
 
 		loading_message('propagating satellite orbits to current time');
-		start_satellite_positions = propagate_to_time(tles, simulated_time);
-		target_satellite_positions = start_satellite_positions;
+		ctx.start_satellite_positions = propagate_to_time(tles, simulated_time);
+		ctx.target_satellite_positions = ctx.start_satellite_positions;
 
-		for (let i = 0; i < start_satellite_positions.length; i++) {
+		for (let i = 0; i < ctx.start_satellite_positions.length; i++) {
 			// Set start positions
-			const [name, position] = start_satellite_positions[i];
-			satellites_position_attribute.setXYZ(i, position.x, position.y, position.z);
+			const [name, position] = ctx.start_satellite_positions[i];
+			ctx.satellites_position_attribute.setXYZ(i, position.x, position.y, position.z);
 		}
 
 		loading_complete('Satellites');
@@ -194,35 +198,35 @@
 		tles: [string, SatRec, OrbitalRegime][],
 		target_time: Date
 	) {
-		start_satellite_positions = target_satellite_positions;
-		target_satellite_positions = propagate_to_time(tles, target_time);
-		interpolated_elapsed_seconds = 0;
+		ctx.start_satellite_positions = ctx.target_satellite_positions;
+		ctx.target_satellite_positions = propagate_to_time(tles, target_time);
+		ctx.interpolated_elapsed_seconds = 0;
 	}
 
 	useTask((delta) => {
-		if (!satellites_position_attribute) {
+		if (!ctx.satellites_position_attribute) {
 			return;
 		}
-		if (interpolated_elapsed_seconds >= tick_rate_seconds) {
+		if (ctx.interpolated_elapsed_seconds >= tick_rate_seconds) {
 			return;
 		}
 
-		interpolated_elapsed_seconds += delta;
+		ctx.interpolated_elapsed_seconds += delta;
 		// Bound to tick rate
-		const t = Math.min(interpolated_elapsed_seconds / tick_rate_seconds, 1);
-		for (let i = 0; i < start_satellite_positions.length; i++) {
-			const start = start_satellite_positions[i][1];
-			const target = target_satellite_positions[i][1];
+		const t = Math.min(ctx.interpolated_elapsed_seconds / tick_rate_seconds, 1);
+		for (let i = 0; i < ctx.start_satellite_positions.length; i++) {
+			const start = ctx.start_satellite_positions[i][1];
+			const target = ctx.target_satellite_positions[i][1];
 
 			const x = start.x + (target.x - start.x) * t;
 			const y = start.y + (target.y - start.y) * t;
 			const z = start.z + (target.z - start.z) * t;
 
-			satellites_position_attribute.setXYZ(i, x, y, z);
+			ctx.satellites_position_attribute.setXYZ(i, x, y, z);
 		}
-		satellites_position_attribute.needsUpdate = true;
-		satellites_geometry.computeBoundingSphere();
-		satellites_geometry.computeBoundingBox();
+		ctx.satellites_position_attribute.needsUpdate = true;
+		ctx.satellites_geometry.computeBoundingSphere();
+		ctx.satellites_geometry.computeBoundingBox();
 	});
 
 	// Declared desired states
@@ -289,14 +293,14 @@
 	}
 
 	function highlight_point(index: number) {
-		point_sizes![index] = SATELLITE_HIGHLIGHTED_SIZE;
-		satellites_geometry!.attributes.size.needsUpdate = true;
+		ctx.point_sizes![index] = SATELLITE_HIGHLIGHTED_SIZE;
+		ctx.satellites_geometry!.attributes.size.needsUpdate = true;
 		invalidate();
 	}
 
 	function unhighlight_point(index: number) {
-		point_sizes![index] = SATELLITE_BASE_SIZE;
-		satellites_geometry!.attributes.size.needsUpdate = true;
+		ctx.point_sizes![index] = SATELLITE_BASE_SIZE;
+		ctx.satellites_geometry!.attributes.size.needsUpdate = true;
 		invalidate();
 	}
 
@@ -484,7 +488,7 @@
 
 		return {
 			name: tles[satellite_index][0],
-			position: target_satellite_positions[satellite_index][1],
+			position: ctx.target_satellite_positions[satellite_index][1],
 			orbital_regime: tles[satellite_index][2],
 			period: format_duration(period_seconds),
 			semi_major_axis: `${semi_major_axis.toFixed(0)} km`,
@@ -513,18 +517,18 @@
 		if (new_leo_transparency != leo_transparency) {
 			tles.forEach(([_name, _satrec, orbital_regime], i) => {
 				if (orbital_regime == OrbitalRegime.LEO) {
-					transparencies![i] = new_leo_transparency;
+					ctx.transparencies![i] = new_leo_transparency;
 				}
 			});
 
 			leo_transparency = new_leo_transparency;
-			satellites_geometry!.attributes.transparency.needsUpdate = true;
+			ctx.satellites_geometry!.attributes.transparency.needsUpdate = true;
 		}
 	}
 </script>
 
-{#if satellites_geometry}
-	<T.Points bind:ref={points_mesh} geometry={satellites_geometry} material={shader_material} />
+{#if ctx.satellites_geometry}
+	<T.Points bind:ref={points_mesh} geometry={ctx.satellites_geometry} material={shader_material} />
 {/if}
 
 <T.Line2 bind:ref={orbit_line}>
