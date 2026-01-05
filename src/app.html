@@ -3,9 +3,28 @@
 
 <head>
 	<meta charset="utf-8" />
-	<link rel="icon" href="/favicon.svg" type="image/svg" />
+	<meta name="description"
+		content="An interactive 3D visualization of Earth’s orbital environment, showing real-time positions of all active satellites using publicly available TLE data and industry-standard orbital propagation models." />
+	<title>Live Satellite Orbits – Real-Time 3D Earth Satellite Visualization</title>
+	<link rel="icon" href="/favicon.png" type="image/png" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	%sveltekit.head%
+
+	<script type="application/ld+json">
+	{
+		"@context": "https://schema.org",
+		"@type": "SoftwareApplication",
+		"name": "Live Satellite Orbits",
+		"description": "An interactive 3D visualization of Earth's orbital environment, showing real-time positions of active satellites using public TLE data.",
+		"url": "https://livesatelliteorbits.com",
+		"applicationCategory": "VisualizationApplication",
+		"operatingSystem": "Web",
+		"creator": {
+			"@type": "Person"
+		}
+	}
+	</script>
+
 </head>
 
 <body data-sveltekit-preload-data="hover">

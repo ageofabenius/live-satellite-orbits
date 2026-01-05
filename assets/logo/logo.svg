@@ -2,25 +2,56 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
-   width="128.69046mm"
-   height="91.235832mm"
-   viewBox="0 0 128.69046 91.235832"
+   width="150mm"
+   height="150mm"
+   viewBox="0 0 150 150"
    version="1.1"
    id="svg1"
+   sodipodi:docname="logo.svg"
+   inkscape:version="1.4.3 (1:1.4.3+202512261034+0d15f75042)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="0.66983766"
+     inkscape:cx="287.38307"
+     inkscape:cy="377.70346"
+     inkscape:window-width="1520"
+     inkscape:window-height="851"
+     inkscape:window-x="8"
+     inkscape:window-y="64"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg1" />
   <defs
      id="defs1" />
+  <ellipse
+     style="fill:#ffffff;stroke:#ffffff;stroke-width:2.00001;stroke-linecap:round;stroke-opacity:1;fill-opacity:1"
+     id="path3"
+     cx="75"
+     cy="75"
+     rx="73.074295"
+     ry="72.679306" />
   <g
      id="layer1"
-     transform="translate(-24.534517,-44.608913)">
+     transform="matrix(0.91603635,0,0,0.91531573,-6.4173153,-7.586757)"
+     style="stroke-width:1.09209">
     <path
-       style="fill:none;stroke:#000000;stroke-width:2.61081;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1"
+       style="fill:none;stroke:#000000;stroke-width:2.85124;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1"
        id="path1"
        d="m 239.6457,-235.86676 a 43.459003,63.603085 0 0 1 -13.29198,77.11052 43.459003,63.603085 0 0 1 -54.31932,-2.15016 43.459003,63.603085 0 0 1 -10.4245,-78.04931 43.459003,63.603085 0 0 1 49.76785,-31.92712"
        transform="matrix(-0.5222848,0.85277112,-0.92332972,0.38400811,0,0)" />
     <path
-       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.937001;stroke-dasharray:none;stroke-opacity:1"
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1.02329;stroke-dasharray:none;stroke-opacity:1"
        id="path2"
        d="M 103.35222,82.587392 89.773904,114.65248 68.793887,86.860764 Z"
        transform="matrix(1.3679931,0,0,1.2995091,-13.655467,-20.532279)" />
