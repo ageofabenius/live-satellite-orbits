@@ -65,6 +65,24 @@
 		</Canvas>
 	</div>
 
+	<noscript>
+		<figure>
+			<img
+				src="/screenshot.png"
+				alt="3D visualization of Earth with thousands of satellites in low Earth orbit"
+				width="2154"
+				height="1047"
+			/>
+			<figcaption>Static preview of the interactive 3D satellite orbit visualization.</figcaption>
+		</figure>
+
+		<p>
+			This page features an interactive 3D visualization of publicly known satellites orbiting
+			Earth, driven by real-time TLE propagation. JavaScript is required to explore the live
+			simulation.
+		</p>
+	</noscript>
+
 	<!-- UI Overlay -->
 	<div class="absolute size-full pointer-events-none z-11">
 		<InfoOverlay />
