@@ -9,6 +9,14 @@ declare global {
 		// interface Platform {}
 	}
 	const __BUILD_TIME__: string;
+
+	module '*.md' {
+		import type { ComponentType } from 'svelte';
+
+		const component: ComponentType;
+		export default component;
+
+	}
 }
 
-export {};
+export { };

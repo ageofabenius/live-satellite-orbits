@@ -1,18 +1,34 @@
 export const prerender = true;
 
 export function GET() {
-    return new Response(
-        `<?xml version="1.0" encoding="UTF-8"?>
+  return new Response(
+    `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://livesatelliteorbits.com/</loc>
     <lastmod>${__BUILD_TIME__}</lastmod>
   </url>
+  <url>
+    <loc>https://livesatelliteorbits.com/what-is-this</loc>
+    <lastmod>${__BUILD_TIME__}</lastmod>
+  </url>
+  <url>
+    <loc>https://livesatelliteorbits.com/data</loc>
+    <lastmod>${__BUILD_TIME__}</lastmod>
+  </url>
+  <url>
+    <loc>https://livesatelliteorbits.com/methodology</loc>
+    <lastmod>${__BUILD_TIME__}</lastmod>
+  </url>
+  <url>
+    <loc>https://livesatelliteorbits.com/about</loc>
+    <lastmod>${__BUILD_TIME__}</lastmod>
+  </url>
 </urlset>`,
-        {
-            headers: {
-                'Content-Type': 'application/xml; charset=utf-8'
-            }
-        }
-    );
+    {
+      headers: {
+        'Content-Type': 'application/xml; charset=utf-8'
+      }
+    }
+  );
 }
