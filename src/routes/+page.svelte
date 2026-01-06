@@ -81,7 +81,7 @@
 	<!-- Canvas scene -->
 	<div bind:this={canvas_parent} id="canvas_parent" class="absolute inset-0 z-0">
 		<Canvas>
-			{#if false}
+			{#if canvas_is_visible}
 				<Scene
 					loading_started={register_loading_started}
 					loading_complete={register_loading_completed}
