@@ -5,6 +5,7 @@
 	import { flip } from 'svelte/animate';
 	import { fade, fly } from 'svelte/transition';
 	import InfoOverlay from './InfoOverlay.svelte';
+	import { onMount } from 'svelte';
 
 	let is_loading = $state(true);
 	let loading_components: Record<string, boolean> = $state({});
@@ -51,17 +52,42 @@
 	}
 
 	loading_message('initializing scene');
+
+	// The full scene should only be loaded and rendered if in an actual web
+	// browser.  This check should prevent against the scene loading in a
+	// headless environment, such as with web crawlers.
+	//
+	// This was added as I believe the long load time was preventing Google from
+	// indexing the site.
+	let canvas_parent: HTMLDivElement | undefined = $state();
+	let canvas_is_visible: boolean = $state(false);
+	onMount(() => {
+		const observer = new IntersectionObserver((entries) => {
+			entries.forEach((entry) => {
+				if (entry.isIntersecting) {
+					console.debug('Canvas is visible in the viewport');
+					canvas_is_visible = true;
+				} else {
+					console.debug('Canvas is not visible in the viewport');
+				}
+			});
+		});
+
+		observer.observe(canvas_parent!);
+	});
 </script>
 
 <div class="h-screen w-screen size-full {SCENE_BACKGROUND} relative">
 	<!-- Canvas scene -->
-	<div class="absolute inset-0 z-0">
+	<div bind:this={canvas_parent} id="canvas_parent" class="absolute inset-0 z-0">
 		<Canvas>
-			<Scene
-				loading_started={register_loading_started}
-				loading_complete={register_loading_completed}
-				{loading_message}
-			/>
+			{#if canvas_is_visible}
+				<Scene
+					loading_started={register_loading_started}
+					loading_complete={register_loading_completed}
+					{loading_message}
+				/>
+			{/if}
 		</Canvas>
 	</div>
 
