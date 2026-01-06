@@ -18,7 +18,7 @@
 	<div class="menu-panel">
 		<div class="flex flex-wrap items-center gap-2">
 			<!-- Title -->
-			<div class="text-sm font-semibold tracking-wide">Live Satellite Orbits</div>
+			<h1 class="text-sm font-semibold tracking-wide">Live Satellite Orbits</h1>
 
 			<!-- Info buttons -->
 
