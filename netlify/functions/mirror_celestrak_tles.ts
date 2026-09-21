@@ -4,11 +4,17 @@ import type { Config } from "@netlify/functions";
 const CELESTRAK_ACTIVE_TLES_URL = "https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle"
 
 export const config: Config = {
-    schedule: "@hourly"
+    schedule: "0 */2 * * *"
 }
 
 export default async function mirror_celestrak() {
     const tles_str = await fetch_tles_from_celestrak()
+    if (!tle_str_is_valid(tles_str)) {
+        console.log("Invalid TLE string fetched from Celestrak, this may be due to too many Celestrak requests in a short period")
+        return await new Response(`Invalid TLE string fetched from Celestrak`, {
+            status: 200,
+        })
+    }
     const size_raw = tles_str.length.toLocaleString('en-US')
     console.log(`Fetched TLEs from Celestrak, ${size_raw}B`)
 
@@ -39,6 +45,18 @@ async function fetch_tles_from_celestrak(): Promise<string> {
     console.timeEnd("Fetched TLEs from Celestrak...")
 
     return str
+}
+
+function tle_str_is_valid(str: string): boolean {
+    const lines = str.split('\n')
+    for (let i = 0; i < lines.length; i += 3) {
+        // Validate that the two lines of the TLE are the correct length
+        if (lines[i + 1].length != 69) return false
+        if (lines[i + 2].length != 69) return false
+        if (!lines[i + 1].startsWith('1 ')) return false
+        if (!lines[i + 2].startsWith('2 ')) return false
+    }
+    return true
 }
 
 async function gzip_string(str: string): Promise<ArrayBuffer> {
